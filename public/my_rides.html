@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Share - My Rides</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 70px;
+            /* Space for nav bar */
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background-color: white;
+            border-bottom: 1px solid #eaeaea;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .devices-badge {
+            background-color: #333;
+            color: white;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .wifi-icon {
+            color: #0066ff;
+            font-size: 18px;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .rides-section {
+            margin-bottom: 24px;
+        }
+
+        .ride-item {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
+        }
+
+        .ride-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .status-label {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.active {
+            background-color: #e3f2fd;
+            color: #0066ff;
+        }
+
+        .status-badge.confirmed {
+            background-color: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .ride-info {
+            margin-bottom: 12px;
+        }
+
+        .ride-route {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .location-icon {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .route-arrow {
+            color: #666;
+            margin: 0 8px;
+        }
+
+        .ride-date {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .date-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .ride-passengers {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .ride-driver {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid #eaeaea;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: #0066ff;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="my-rides-page" class="page active">
+        <div class="header">
+            <h1>My Rides</h1>
+            <div class="devices-badge">
+                <span class="wifi-icon">📶</span>
+                <span>4 devices</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <h2 class="section-title">Upcoming Rides</h2>
+
+            <div class="rides-section">
+                <div class="ride-item">
+                    <div class="ride-status">
+                        <div class="status-label">You are driving</div>
+                        <div class="status-badge active">Active</div>
+                    </div>
+                    <div class="ride-info">
+                        <div class="ride-route">
+                            <span class="location-icon">📍</span>
+                            <span>University Campus</span>
+                            <span class="route-arrow">→</span>
+                            <span>Downtown</span>
+                        </div>
+                    </div>
+                    <div class="ride-date">
+                        <div class="date-item">
+                            <span>📅</span>
+                            <span>2024-02-20</span>
+                        </div>
+                        <div class="date-item">
+                            <span>🕒</span>
+                            <span>14:30</span>
+                        </div>
+                    </div>
+                    <div class="ride-passengers">2/3 passengers</div>
+                </div>
+
+                <div class="ride-item">
+                    <div class="ride-status">
+                        <div class="status-label">You are a passenger</div>
+                        <div class="status-badge confirmed">Confirmed</div>
+                    </div>
+                    <div class="ride-info">
+                        <div class="ride-route">
+                            <span class="location-icon">📍</span>
+                            <span>Library</span>
+                            <span class="route-arrow">→</span>
+                            <span>Shopping Mall</span>
+                        </div>
+                    </div>
+                    <div class="ride-date">
+                        <div class="date-item">
+                            <span>📅</span>
+                            <span>2024-02-21</span>
+                        </div>
+                        <div class="date-item">
+                            <span>🕒</span>
+                            <span>15:45</span>
+                        </div>
+                    </div>
+                    <div class="ride-driver">Driver: Jane Smith</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item" onclick="location.href='index.html'">
+            <div class="nav-icon">🔍</div>
+            <div>Find Rides</div>
+        </div>
+        <div class="nav-item" onclick="location.href='offer_rides.html'">
+            <div class="nav-icon">🚗</div>
+            <div>Offer Ride</div>
+        </div>
+        <div class="nav-item active" onclick="location.href='my_rides.html'">
+            <div class="nav-icon">📍</div>
+            <div>My Rides</div>
+        </div>
+        <div class="nav-item" onclick="location.href='profile.html'">
+            <div class="nav-icon">👤</div>
+            <div>Profile</div>
+        </div>
+    </div>
+</body>
+
+</html>

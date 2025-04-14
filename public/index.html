@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Share - Find Rides</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background-color: white;
+            border-bottom: 1px solid #eaeaea;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .devices-badge {
+            background-color: #333;
+            color: white;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .wifi-icon {
+            color: #0066ff;
+            font-size: 18px;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        .search-bar {
+            background-color: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-icon {
+            color: #666;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        .search-input {
+            border: none;
+            outline: none;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .ride-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .ride-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .driver-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .ride-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0066ff;
+        }
+
+        .ride-route {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .location-icon {
+            color: #666;
+            font-size: 18px;
+        }
+
+        .route-arrow {
+            color: #666;
+            margin: 0 8px;
+        }
+
+        .ride-details {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid #eaeaea;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: #0066ff;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="find-rides-page" class="page active">
+        <div class="header">
+            <h1>Find a Ride</h1>
+            <div class="devices-badge">
+                <span class="wifi-icon">📶</span>
+                <span>4 devices</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="search-bar">
+                <div class="search-icon">🔍</div>
+                <input type="text" class="search-input" placeholder="Where do you want to go?">
+                <button class="search-button"
+                    style="margin-left: 10px; padding: 8px 16px; background-color: #0066ff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    Search
+                </button>
+            </div>
+
+            <h2 class="section-title">Available Rides</h2>
+
+            <!-- Available rides will be dynamically added here -->
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="showPage('find-rides-page')">
+            <div class="nav-icon">🔍</div>
+            <div>Find Rides</div>
+        </div>
+        <div class="nav-item" onclick="location.href='offer_rides.html'">
+            <div class="nav-icon">🚗</div>
+            <div>Offer Ride</div>
+        </div>
+        <div class="nav-item" onclick="location.href='my_rides.html'">
+            <div class="nav-icon">📍</div>
+            <div>My Rides</div>
+        </div>
+        <div class="nav-item" onclick="location.href='profile.html'">
+            <div class="nav-icon">👤</div>
+            <div>Profile</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.querySelector('.search-input');
+            const searchButton = document.querySelector('.search-button');
+            const container = document.querySelector('.container');
+
+            function performSearch() {
+                const query = searchInput.value.trim();
+
+                if (query.length > 0) {
+                    // Fetch rides from the backend based on the destination_name
+                    fetch(`http://localhost:3000/api/search-rides?destination=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Clear existing ride cards
+                            const rideCards = document.querySelectorAll('.ride-card');
+                            rideCards.forEach(card => card.remove());
+
+                            // Populate available rides
+                            data.forEach(ride => {
+                                const rideCard = document.createElement('div');
+                                rideCard.classList.add('ride-card');
+                                rideCard.innerHTML = `
+                            <div class="ride-header">
+                                <div class="driver-name">${ride.driver_name}</div>
+                                <div class="ride-price">$${ride.price_per_seat}</div>
+                            </div>
+                            <div class="ride-route">
+                                <span class="location-icon">📍</span>
+                                <span>${ride.start_location}</span>
+                                <span class="route-arrow">→</span>
+                                <span>${ride.destination_name}</span>
+                            </div>
+                            <div class="ride-details">
+                                <div class="detail-item">
+                                    <span>🕒</span>
+                                    <span>Departure: ${ride.time}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span>👥</span>
+                                    <span>${ride.available_seats} seats left</span>
+                                </div>
+                            </div>
+                        `;
+
+                                // Make the ride card clickable
+                                rideCard.addEventListener('click', function () {
+                                    window.location.href = `ride_details.html?ride_id=${ride.ride_id}`;
+                                });
+
+                                container.appendChild(rideCard);
+                            });
+                        })
+                        .catch(err => console.error('Error fetching rides:', err));
+                }
+            }
+
+            // Trigger search when the button is clicked
+            searchButton.addEventListener('click', performSearch);
+
+            // Optional: Trigger search when the Enter key is pressed in the input field
+            searchInput.addEventListener('keypress', function (event) {
+                if (event.key === 'Enter') {
+                    performSearch();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Details</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        .confirm-button {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background-color: #0066ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="confirm-button">Confirm Location</button>
+    <div id="map"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get ride_id from the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const rideId = urlParams.get('ride_id');
+
+            // Fetch ride details from the backend
+            fetch(`http://localhost:3000/api/ride-details?ride_id=${rideId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Initialize the map with a tile layer
+                    const map = L.map('map');
+                    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    }).addTo(map);
+
+                    // Parse the route polyline
+                    const polyline = JSON.parse(data.route_polyline);
+
+                    // Add the route polyline to the map
+                    const routeLayer = L.polyline(polyline, { color: 'blue' }).addTo(map);
+
+                    // Fit the map to the route
+                    map.fitBounds(routeLayer.getBounds());
+
+                    // Add markers for start and destination
+                    L.marker([data.start_lat, data.start_lng]).addTo(map).bindPopup('Driver Location');
+                    L.marker([data.end_lat, data.end_lng]).addTo(map).bindPopup('Destination');
+
+                    // Add a draggable marker for the passenger
+                    const boardingMarker = L.marker(polyline[0], { draggable: true }).addTo(map);
+
+                    // Function to calculate distance between two points (Haversine formula)
+                    function calculateDistance(lat1, lng1, lat2, lng2) {
+                        const R = 6371e3; // Earth's radius in meters
+                        const toRadians = (degrees) => degrees * (Math.PI / 180);
+                        const dLat = toRadians(lat2 - lat1);
+                        const dLng = toRadians(lng2 - lng1);
+                        const a =
+                            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+                            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                        return R * c; // Distance in meters
+                    }
+
+                    // Handle "Confirm Location" button click
+                    document.querySelector('.confirm-button').addEventListener('click', function () {
+                        const markerLatLng = boardingMarker.getLatLng();
+                        const markerLat = markerLatLng.lat;
+                        const markerLng = markerLatLng.lng;
+
+                        // Check if the marker's position is near the route polyline
+                        const isNearRoute = polyline.some(([lat, lng]) => {
+                            const distance = calculateDistance(markerLat, markerLng, lat, lng);
+                            return distance <= 50; // Allow up to 50 meters from the route
+                        });
+
+                        if (isNearRoute) {
+                            alert('Boarding point confirmed!');
+                        } else {
+                            alert('Please place the marker closer to the route.');
+                        }
+                    });
+                })
+                .catch(err => console.error('Error fetching ride details:', err));
+        });
+    </script>
+</body>
+
+</html>

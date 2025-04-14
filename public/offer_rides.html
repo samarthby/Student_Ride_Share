@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Share - Offer a Ride</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <!-- Alternative CDN for Leaflet Routing Machine CSS -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background-color: white;
+            border-bottom: 1px solid #eaeaea;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .devices-badge {
+            background-color: #333;
+            color: white;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .wifi-icon {
+            color: #0066ff;
+            font-size: 18px;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-control {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            border: 1px solid #eaeaea;
+        }
+
+        .form-icon {
+            color: #666;
+            margin-right: 12px;
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .form-input {
+            border: none;
+            outline: none;
+            font-size: 16px;
+            width: 100%;
+            background: transparent;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .submit-btn {
+            background-color: #0066ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 16px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        #map {
+            height: 300px;
+            width: 100%;
+            margin-top: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid #eaeaea;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: #0066ff;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="offer-ride-page" class="page active">
+        <div class="header">
+            <h1>Offer a Ride</h1>
+            <div class="devices-badge">
+                <span class="wifi-icon">📶</span>
+                <span>4 devices</span>
+            </div>
+        </div>
+
+        <div class="container">
+            <form>
+                <div class="form-group">
+                    <div class="form-control">
+                        <div class="form-icon">📍</div>
+                        <input type="text" class="form-input" id="currentLocation" placeholder="Your current location"
+                            disabled>
+                        <button type="button" id="fetchLocation"
+                            style="margin-left: 10px; padding: 8px; border: none; background-color: #0066ff; color: white; border-radius: 5px; cursor: pointer;">
+                            Get Location
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-control">
+                        <div class="form-icon">📍</div>
+                        <input type="text" class="form-input" id="destination" placeholder="Destination">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="form-control">
+                            <div class="form-icon">📅</div>
+                            <input type="text" class="form-input" placeholder="Date (YYYY-MM-DD)">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-control">
+                            <div class="form-icon">🕒</div>
+                            <input type="text" class="form-input" placeholder="Time (HH:MM AM/PM)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="form-control">
+                            <div class="form-icon">👥</div>
+                            <input type="text" class="form-input" placeholder="Available seats">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-control">
+                            <div class="form-icon">💲</div>
+                            <input type="text" class="form-input" placeholder="Price per seat">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="submit-btn" id="postRide">Post Ride</button>
+            </form>
+
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item" onclick="location.href='index.html'">
+            <div class="nav-icon">🔍</div>
+            <div>Find Rides</div>
+        </div>
+        <div class="nav-item active" onclick="showPage('offer-ride-page')">
+            <div class="nav-icon">🚗</div>
+            <div>Offer Ride</div>
+        </div>
+        <div class="nav-item" onclick="location.href='my_rides.html'">
+            <div class="nav-icon">📍</div>
+            <div>My Rides</div>
+        </div>
+        <div class="nav-item" onclick="location.href='profile.html'">
+            <div class="nav-icon">👤</div>
+            <div>Profile</div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const map = L.map('map').setView([51.505, -0.09], 13);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            let marker, routeLayer, destinationMarker, routingControl;
+            let riderLat, riderLng;
+
+            function updateRiderLocation(lat, lng) {
+                riderLat = lat;
+                riderLng = lng;
+
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'current-location-icon',
+                            html: '<div style="background-color: blue; border-radius: 50%; width: 20px; height: 20px;"></div>'
+                        })
+                    }).addTo(map);
+                }
+                map.setView([lat, lng]);
+                document.getElementById('currentLocation').value = `Lat: ${lat}, Lng: ${lng}`;
+            }
+
+            document.getElementById('fetchLocation').addEventListener('click', function () {
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        updateRiderLocation(pos.coords.latitude, pos.coords.longitude);
+                    },
+                    function (err) {
+                        alert("Geolocation error: " + err.message);
+                    },
+                    { enableHighAccuracy: true, maximumAge: 0 }
+                );
+            });
+
+            document.getElementById('postRide').addEventListener('click', function () {
+                const destinationValue = document.getElementById('destination').value;
+                const dateValue = document.querySelector('input[placeholder="Date (YYYY-MM-DD)"]').value;
+                const timeValue = document.querySelector('input[placeholder="Time (HH:MM AM/PM)"]').value;
+                const seatsValue = document.querySelector('input[placeholder="Available seats"]').value;
+                const priceValue = document.querySelector('input[placeholder="Price per seat"]').value;
+
+                if (!destinationValue || !dateValue || !timeValue || !seatsValue || !priceValue) {
+                    alert('Please fill in all the fields.');
+                    return;
+                }
+
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destinationValue)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            const destLat = parseFloat(data[0].lat);
+                            const destLng = parseFloat(data[0].lon);
+
+                            // Remove previous route and destination marker
+                            if (routeLayer) {
+                                map.removeLayer(routeLayer);
+                            }
+                            if (destinationMarker) {
+                                map.removeLayer(destinationMarker);
+                            }
+                            if (routingControl) {
+                                map.removeControl(routingControl);
+                            }
+
+                            // Add a marker for the destination
+                            destinationMarker = L.marker([destLat, destLng]).addTo(map);
+
+                            if (L.Routing) {
+                                routingControl = L.Routing.control({
+                                    waypoints: [
+                                        L.latLng(riderLat, riderLng),
+                                        L.latLng(destLat, destLng)
+                                    ],
+                                    routeWhileDragging: false,
+                                    createMarker: () => null // Do not create default markers
+                                }).addTo(map);
+
+                                routingControl.on('routesfound', function (e) {
+                                    const route = e.routes[0];
+                                    const polyline = route.coordinates.map(coord => [coord.lat, coord.lng]);
+
+                                    // Highlight the route in black
+                                    routeLayer = L.polyline(polyline, { color: 'black' }).addTo(map);
+
+                                    const rideDetails = {
+                                        driver_id: 1,
+                                        start_lat: riderLat,
+                                        start_lng: riderLng,
+                                        end_lat: destLat,
+                                        end_lng: destLng,
+                                        route_polyline: JSON.stringify(polyline),
+                                        destination_name: destinationValue,
+                                        date: dateValue,
+                                        time: timeValue,
+                                        available_seats: seatsValue,
+                                        price_per_seat: priceValue
+                                    };
+
+                                    fetch('http://localhost:3000/api/offer-ride', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify(rideDetails)
+                                    })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.message === 'Ride details stored successfully.') {
+                                                alert('Ride posted successfully!');
+                                            } else {
+                                                alert('Failed to post the ride.');
+                                            }
+                                        })
+                                        .catch(err => console.error('Error posting ride:', err));
+                                });
+                            } else {
+                                alert('Routing functionality is not available.');
+                            }
+                        } else {
+                            alert('Destination not found.');
+                        }
+                    })
+                    .catch(err => console.error('Geocoding error:', err));
+            });
+        });
+    </script>
+</body>
+
+</html>

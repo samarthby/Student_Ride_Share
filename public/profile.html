@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Share - Profile</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 70px;
+            /* Space for nav bar */
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background-color: white;
+            border-bottom: 1px solid #eaeaea;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .devices-badge {
+            background-color: #333;
+            color: white;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .wifi-icon {
+            color: #0066ff;
+            font-size: 18px;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px;
+        }
+
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 16px;
+        }
+
+        .profile-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .profile-email {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .profile-stats {
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            margin-bottom: 32px;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 24px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #ffc107;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .menu-list {
+            width: 100%;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .menu-icon {
+            font-size: 20px;
+            margin-right: 16px;
+            color: #666;
+            width: 24px;
+            text-align: center;
+        }
+
+        .menu-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .logout {
+            color: #ff3b30;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid #eaeaea;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #666;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: #0066ff;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="profile-page" class="page active">
+        <div class="header">
+            <h1>John Doe</h1>
+            <div class="devices-badge">
+                <span class="wifi-icon">📶</span>
+                <span>4 devices</span>
+            </div>
+        </div>
+
+        <div class="profile-container">
+            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-03-26%20at%207.33.31%20PM-8CrIhpuyxXkXcsU0u0G6DrV82M5XgC.jpeg"
+                alt="Profile Picture" class="profile-image">
+            <h2 class="profile-name">John Doe</h2>
+            <p class="profile-email">john.doe@university.edu</p>
+
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value">4.8</div>
+                    <div class="stat-label">Rating</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">15</div>
+                    <div class="stat-label">Rides</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon" style="color: #4caf50;">✓</div>
+                    <div class="stat-label">Verified</div>
+                </div>
+            </div>
+
+            <div class="menu-list">
+                <div class="menu-item">
+                    <div class="menu-icon">⚙️</div>
+                    <div class="menu-text">Account Settings</div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">🔒</div>
+                    <div class="menu-text">Privacy & Security</div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">💳</div>
+                    <div class="menu-text">Payment Methods</div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">🚪</div>
+                    <div class="menu-text logout">Log Out</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item" onclick="location.href='index.html'">
+            <div class="nav-icon">🔍</div>
+            <div>Find Rides</div>
+        </div>
+        <div class="nav-item" onclick="location.href='offer_rides.html'">
+            <div class="nav-icon">🚗</div>
+            <div>Offer Ride</div>
+        </div>
+        <div class="nav-item" onclick="location.href='my_rides.html'">
+            <div class="nav-icon">📍</div>
+            <div>My Rides</div>
+        </div>
+        <div class="nav-item active" onclick="location.href='profile.html'">
+            <div class="nav-icon">👤</div>
+            <div>Profile</div>
+        </div>
+    </div>
+</body>
+
+</html>
