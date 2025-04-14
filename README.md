@@ -11,8 +11,8 @@ Follow these steps to get started:
 1. **Clone the repository** to your local machine:
 
     ```bash
-    git clone https://github.com/your-username/your-repo-name.git
-    cd your-repo-name
+    git clone https://github.com/samarthby/Student_Ride_Share.git
+    cd Student_Ride_Share.git
     ```
 
 2. **Install dependencies** using npm:
