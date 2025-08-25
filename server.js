@@ -33,7 +33,7 @@ app.post('/api/offer-ride', (req, res) => {
     const {
         driver_id, start_lat, start_lng,
         end_lat, end_lng, route_polyline,
-        destination_name, date, time,
+        source_name, destination_name, date, time,
         available_seats, price_per_seat
     } = req.body;
 
@@ -52,16 +52,16 @@ app.post('/api/offer-ride', (req, res) => {
             INSERT INTO rides (
                 driver_id, start_lat, start_lng,
                 end_lat, end_lng, route_polyline,
-                destination_name, date, time,
+                source_name, destination_name, date, time,
                 available_seats, price_per_seat, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
 
         db.query(insertRideSql, [
             driver_id, start_lat, start_lng,
             end_lat, end_lng, route_polyline,
-            destination_name, date, time,
+            source_name, destination_name, date, time,
             available_seats, price_per_seat
         ], (err, result) => {
             if (err) {
@@ -86,7 +86,7 @@ app.get('/api/search-rides', (req, res) => {
     }
 
     const query = `
-        SELECT ride_id, driver_id, destination_name,
+        SELECT ride_id, driver_id, source_name, destination_name,
                start_lat, start_lng, end_lat, end_lng,
                time, available_seats, price_per_seat
         FROM rides

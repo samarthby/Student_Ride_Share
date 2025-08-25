@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS rides (
     end_lat DECIMAL(10,8) NOT NULL,
     end_lng DECIMAL(11,8) NOT NULL,
     route_polyline TEXT NOT NULL,
+    source_name VARCHAR(255) DEFAULT NULL,
     destination_name VARCHAR(255) NOT NULL,
     date DATE NOT NULL,
     time TIME NOT NULL,

@@ -192,12 +192,26 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <div class="form-control">
-                        <div class="form-icon">📍</div>
-                        <input type="text" class="form-input" id="destination" placeholder="Destination">
+
+                <div class="form-row">
+
+                    <div class="form-group">
+                        <div class="form-group">
+                            <div class="form-control">
+                                <div class="form-icon">📍</div>
+                                <input type="text" class="form-input" id="source" placeholder="Source">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-control">
+                            <div class="form-icon">📍</div>
+                            <input type="text" class="form-input" id="destination" placeholder="Destination">
+                        </div>
                     </div>
                 </div>
+
+
 
                 <div class="form-row">
                     <div class="form-group">
@@ -300,13 +314,14 @@
             });
 
             document.getElementById('postRide').addEventListener('click', function () {
+                const sourceValue = document.getElementById('source').value;
                 const destinationValue = document.getElementById('destination').value;
                 const dateValue = document.querySelector('input[placeholder="Date (YYYY-MM-DD)"]').value;
                 const timeValue = document.querySelector('input[placeholder="Time (HH:MM AM/PM)"]').value;
                 const seatsValue = document.querySelector('input[placeholder="Available seats"]').value;
                 const priceValue = document.querySelector('input[placeholder="Price per seat"]').value;
 
-                if (!destinationValue || !dateValue || !timeValue || !seatsValue || !priceValue) {
+                if (!sourceValue || !destinationValue || !dateValue || !timeValue || !seatsValue || !priceValue) {
                     alert('Please fill in all the fields.');
                     return;
                 }
@@ -356,6 +371,7 @@
                                         end_lat: destLat,
                                         end_lng: destLng,
                                         route_polyline: JSON.stringify(polyline),
+                                        source_name: sourceValue,
                                         destination_name: destinationValue,
                                         date: dateValue,
                                         time: timeValue,
