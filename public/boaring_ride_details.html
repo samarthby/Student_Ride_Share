@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Boarding Ride Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rideId = urlParams.get('ride_id');
+            if (!rideId) {
+                alert('No ride_id provided.');
+                return;
+            }
+
+            // Fetch ride details and boarding points in parallel
+            Promise.all([
+                fetch(`http://localhost:3000/api/ride-details?ride_id=${rideId}`).then(res => res.json()),
+                fetch(`http://localhost:3000/api/boarding-points?ride_id=${rideId}`).then(res => res.json())
+            ]).then(([ride, boardingPoints]) => {
+                // Initialize map
+                const map = L.map('map');
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                // Draw route polyline
+                const polyline = JSON.parse(ride.route_polyline);
+                const routeLayer = L.polyline(polyline, { color: 'blue' }).addTo(map);
+                map.fitBounds(routeLayer.getBounds());
+
+                // Start and end markers
+                L.marker([ride.start_lat, ride.start_lng]).addTo(map).bindPopup('Start');
+                L.marker([ride.end_lat, ride.end_lng]).addTo(map).bindPopup('Destination');
+
+                // Boarding points (red markers)
+                boardingPoints.forEach(bp => {
+                    L.marker([bp.boarding_lat, bp.boarding_lng], {
+                        icon: L.divIcon({
+                            className: 'boarding-point-marker',
+                            html: '<div style="background-color:red;width:18px;height:18px;border-radius:50%;border:2px solid #fff;"></div>'
+                        })
+                    }).addTo(map).bindPopup('Passenger Boarding Point');
+                });
+            }).catch(err => {
+                alert('Failed to load ride or boarding points.');
+                console.error(err);
+            });
+        });
+    </script>
+</body>
+
+</html>

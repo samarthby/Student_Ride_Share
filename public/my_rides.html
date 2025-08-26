@@ -257,10 +257,12 @@
                         return;
                     }
                     rides.forEach(ride => {
-                        // Only show rides where driver_email matches user_email (if present in DB)
-                        if (ride.driver_email && ride.driver_email !== userEmail) return;
                         const div = document.createElement('div');
                         div.className = 'ride-item';
+                        div.style.cursor = 'pointer';
+                        div.onclick = function () {
+                            window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
+                        };
                         div.innerHTML = `
                             <div class="ride-status">
                                 <div class="status-label">You are driving</div>
@@ -288,29 +290,8 @@
                         `;
                         section.appendChild(div);
                     });
-                    // If all rides were filtered out, show "No rides posted yet."
-                    if (!section.hasChildNodes()) {
-                        section.innerHTML = '<div style="color:#888;">No rides posted yet.</div>';
-                    }
                 });
         }
-
-        function showBoardingPointsOnMap(ride_id, map) {
-            fetch(`http://localhost:3000/api/boarding-points?ride_id=${ride_id}`)
-                .then(res => res.json())
-                .then(points => {
-                    points.forEach(point => {
-                        L.marker([point.boarding_lat, point.boarding_lng], {
-                            icon: L.divIcon({
-                                className: 'boarding-point-marker',
-                                html: '<div style="background-color:red;width:16px;height:16px;border-radius:50%;"></div>'
-                            })
-                        }).addTo(map).bindPopup('Passenger Boarding Point');
-                    });
-                });
-        }
-        // Call this function after rendering the map for each ride
-        // showBoardingPointsOnMap(ride_id, map);
 
         document.addEventListener('DOMContentLoaded', function () {
             loadMyRides();
