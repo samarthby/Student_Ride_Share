@@ -182,12 +182,6 @@
             <form>
                 <div class="form-group">
                     <div class="form-control">
-                        <div class="form-icon">📧</div>
-                        <input type="email" class="form-input" id="driverEmail" placeholder="Your Email" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="form-control">
                         <div class="form-icon">📍</div>
                         <input type="text" class="form-input" id="currentLocation" placeholder="Your current location"
                             disabled>
@@ -287,12 +281,11 @@
             }).addTo(map);
 
             let marker, routeLayer, destinationMarker, routingControl;
-            let riderLat, riderLng;
+            let riderLat = null, riderLng = null;
 
             function updateRiderLocation(lat, lng) {
                 riderLat = lat;
                 riderLng = lng;
-
                 if (marker) {
                     marker.setLatLng([lat, lng]);
                 } else {
@@ -307,20 +300,26 @@
                 document.getElementById('currentLocation').value = `Lat: ${lat}, Lng: ${lng}`;
             }
 
+            // Auto-fetch location on page load
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => updateRiderLocation(pos.coords.latitude, pos.coords.longitude),
+                    () => { },
+                    { enableHighAccuracy: true, maximumAge: 0 }
+                );
+            }
+
             document.getElementById('fetchLocation').addEventListener('click', function () {
                 navigator.geolocation.getCurrentPosition(
-                    function (pos) {
-                        updateRiderLocation(pos.coords.latitude, pos.coords.longitude);
-                    },
-                    function (err) {
-                        alert("Geolocation error: " + err.message);
-                    },
+                    pos => updateRiderLocation(pos.coords.latitude, pos.coords.longitude),
+                    err => alert("Geolocation error: " + err.message),
                     { enableHighAccuracy: true, maximumAge: 0 }
                 );
             });
 
             document.getElementById('postRide').addEventListener('click', function () {
-                const driverEmail = document.getElementById('driverEmail').value;
+                const driverEmail = localStorage.getItem('user_email');
+                const driverId = localStorage.getItem('user_id');
                 const sourceValue = document.getElementById('source').value;
                 const destinationValue = document.getElementById('destination').value;
                 const dateValue = document.querySelector('input[placeholder="Date (YYYY-MM-DD)"]').value;
@@ -328,8 +327,24 @@
                 const seatsValue = document.querySelector('input[placeholder="Available seats"]').value;
                 const priceValue = document.querySelector('input[placeholder="Price per seat"]').value;
 
-                if (!driverEmail || !sourceValue || !destinationValue || !dateValue || !timeValue || !seatsValue || !priceValue) {
-                    alert('Please fill in all the fields.');
+                if (
+                    !driverEmail || !driverId ||
+                    !sourceValue || !destinationValue ||
+                    !dateValue || !timeValue || !seatsValue || !priceValue ||
+                    riderLat === null || riderLng === null
+                ) {
+                    alert('Please fill in all the fields, set your location, and make sure you are logged in.');
+                    return;
+                }
+
+                if (
+                    isNaN(Number(driverId)) ||
+                    isNaN(Number(riderLat)) ||
+                    isNaN(Number(riderLng)) ||
+                    isNaN(Number(seatsValue)) ||
+                    isNaN(Number(priceValue))
+                ) {
+                    alert('Invalid numeric input. Please check your form.');
                     return;
                 }
 
@@ -340,18 +355,10 @@
                             const destLat = parseFloat(data[0].lat);
                             const destLng = parseFloat(data[0].lon);
 
-                            // Remove previous route and destination marker
-                            if (routeLayer) {
-                                map.removeLayer(routeLayer);
-                            }
-                            if (destinationMarker) {
-                                map.removeLayer(destinationMarker);
-                            }
-                            if (routingControl) {
-                                map.removeControl(routingControl);
-                            }
+                            if (routeLayer) map.removeLayer(routeLayer);
+                            if (destinationMarker) map.removeLayer(destinationMarker);
+                            if (routingControl) map.removeControl(routingControl);
 
-                            // Add a marker for the destination
                             destinationMarker = L.marker([destLat, destLng]).addTo(map);
 
                             if (L.Routing) {
@@ -361,40 +368,45 @@
                                         L.latLng(destLat, destLng)
                                     ],
                                     routeWhileDragging: false,
-                                    createMarker: () => null // Do not create default markers
+                                    createMarker: () => null
                                 }).addTo(map);
 
                                 routingControl.on('routesfound', function (e) {
                                     const route = e.routes[0];
                                     const polyline = route.coordinates.map(coord => [coord.lat, coord.lng]);
 
-                                    // Highlight the route in black
-                                    routeLayer = L.polyline(polyline, { color: 'black' }).addTo(map);
+                                    if (isNaN(Number(destLat)) || isNaN(Number(destLng))) {
+                                        alert('Invalid destination coordinates.');
+                                        return;
+                                    }
 
                                     const rideDetails = {
                                         driver_email: driverEmail,
-                                        driver_id: 1,
-                                        start_lat: riderLat,
-                                        start_lng: riderLng,
-                                        end_lat: destLat,
-                                        end_lng: destLng,
+                                        driver_id: Number(driverId),
+                                        start_lat: Number(riderLat),
+                                        start_lng: Number(riderLng),
+                                        end_lat: Number(destLat),
+                                        end_lng: Number(destLng),
                                         route_polyline: JSON.stringify(polyline),
                                         source_name: sourceValue,
                                         destination_name: destinationValue,
                                         date: dateValue,
                                         time: timeValue,
-                                        available_seats: seatsValue,
-                                        price_per_seat: priceValue
+                                        available_seats: Number(seatsValue),
+                                        price_per_seat: Number(priceValue)
                                     };
 
                                     fetch('http://localhost:3000/api/offer-ride', {
                                         method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
+                                        headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify(rideDetails)
                                     })
-                                        .then(response => response.json())
+                                        .then(response => {
+                                            if (!response.ok) {
+                                                return response.json().then(err => { throw err; });
+                                            }
+                                            return response.json();
+                                        })
                                         .then(data => {
                                             if (data.message === 'Ride details stored successfully.') {
                                                 alert('Ride posted successfully!');
@@ -402,7 +414,10 @@
                                                 alert('Failed to post the ride.');
                                             }
                                         })
-                                        .catch(err => console.error('Error posting ride:', err));
+                                        .catch(err => {
+                                            alert('Failed to post the ride. ' + (err.message || ''));
+                                            console.error('Error posting ride:', err);
+                                        });
                                 });
                             } else {
                                 alert('Routing functionality is not available.');

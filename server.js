@@ -37,7 +37,8 @@ app.post('/api/offer-ride', (req, res) => {
         available_seats, price_per_seat
     } = req.body;
 
-    const checkDriverSql = 'SELECT * FROM users WHERE user_id = ? AND user_type = "driver"';
+    // Remove user_type check, just check if user exists
+    const checkDriverSql = 'SELECT * FROM users WHERE user_id = ?';
     db.query(checkDriverSql, [driver_id], (err, results) => {
         if (err) {
             console.error('Error checking driver:', err);
@@ -168,8 +169,8 @@ app.post('/api/signup', (req, res) => {
             return res.json({ success: false, message: 'Email already registered.' });
         }
         db.query(
-            'INSERT INTO users (name, email, user_type, password) VALUES (?, ?, ?, ?)',
-            [name, email, 'passenger', password],
+            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+            [name, email, password],
             (err, result) => {
                 if (err) return res.json({ success: false, message: 'Database error.' });
                 return res.json({ success: true, user_id: result.insertId, name, email });

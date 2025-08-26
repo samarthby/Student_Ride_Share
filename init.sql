@@ -2,18 +2,16 @@
 CREATE DATABASE IF NOT EXISTS ride_share;
 USE ride_share;
 
--- Users table
+-- Users table (no user_type, just basic user info)
 CREATE TABLE IF NOT EXISTS users (
     user_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    phone VARCHAR(15) NOT NULL UNIQUE,
-    user_type ENUM('driver','passenger') NOT NULL,
-    password VARCHAR(255) NOT NULL, -- added for authentication
+    password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Rides table
+-- Rides table (driver_id references users, no user_type needed)
 CREATE TABLE IF NOT EXISTS rides (
     ride_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     driver_id INT NOT NULL,
@@ -32,7 +30,7 @@ CREATE TABLE IF NOT EXISTS rides (
     FOREIGN KEY (driver_id) REFERENCES users(user_id)
 );
 
--- Passenger Requests table
+-- Passenger Requests table (no change)
 CREATE TABLE IF NOT EXISTS passenger_requests (
     request_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     ride_id INT NOT NULL,
@@ -45,7 +43,7 @@ CREATE TABLE IF NOT EXISTS passenger_requests (
     FOREIGN KEY (passenger_id) REFERENCES users(user_id)
 );
 
--- Ride History table
+-- Ride History table (no change)
 CREATE TABLE IF NOT EXISTS ride_history (
     history_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     ride_id INT NOT NULL,
@@ -57,7 +55,7 @@ CREATE TABLE IF NOT EXISTS ride_history (
     FOREIGN KEY (passenger_id) REFERENCES users(user_id)
 );
 
--- Ride Locations (for live tracking)
+-- Ride Locations (for live tracking, no change)
 CREATE TABLE IF NOT EXISTS ride_locations (
     location_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     ride_id INT NOT NULL,

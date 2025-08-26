@@ -299,6 +299,14 @@
                     performSearch();
                 }
             });
+
+            // Optionally, show a warning if using OSRM demo server
+            if (window.location.href.includes('offer_rides.html')) {
+                console.warn(
+                    "You are using OSRM's demo server. It is NOT SUITABLE FOR PRODUCTION USE. " +
+                    "Refer to https://github.com/Project-OSRM/osrm-backend/wiki/Api-usage-policy"
+                );
+            }
         });
     </script>
 </body>
