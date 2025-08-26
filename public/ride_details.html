@@ -42,6 +42,7 @@
             // Get ride_id from the URL
             const urlParams = new URLSearchParams(window.location.search);
             const rideId = urlParams.get('ride_id');
+            const passengerId = localStorage.getItem('user_id'); // <-- Make sure this is set
 
             // Fetch ride details from the backend
             fetch(`http://localhost:3000/api/ride-details?ride_id=${rideId}`)
@@ -108,6 +109,26 @@
 
                         if (isNearRoute) {
                             alert('Boarding point confirmed!');
+                            // Send to backend
+                            fetch('http://localhost:3000/api/boarding-point', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    ride_id: rideId,
+                                    passenger_id: passengerId,
+                                    boarding_lat: markerLat,
+                                    boarding_lng: markerLng
+                                })
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    // Optionally show a message or update UI
+                                    // alert(data.message); // Uncomment for debug
+                                })
+                                .catch(err => {
+                                    alert('Failed to save boarding point.');
+                                    console.error(err);
+                                });
                         } else {
                             alert('Please place the marker closer to the route.');
                         }

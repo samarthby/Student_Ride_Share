@@ -64,3 +64,15 @@ CREATE TABLE IF NOT EXISTS ride_locations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (ride_id) REFERENCES rides(ride_id)
 );
+
+-- Ride Boarding Points table (newly added)
+CREATE TABLE IF NOT EXISTS ride_boarding_points (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    ride_id INT NOT NULL,
+    passenger_id INT NOT NULL,
+    boarding_lat DECIMAL(10,8) NOT NULL,
+    boarding_lng DECIMAL(11,8) NOT NULL,
+    confirmed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ride_id) REFERENCES rides(ride_id),
+    FOREIGN KEY (passenger_id) REFERENCES users(user_id)
+);

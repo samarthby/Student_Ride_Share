@@ -198,6 +198,42 @@ app.post('/api/login', (req, res) => {
     });
 });
 
+// Endpoint to save passenger boarding point
+app.post('/api/boarding-point', (req, res) => {
+    const { ride_id, passenger_id, boarding_lat, boarding_lng } = req.body;
+    if (!ride_id || !passenger_id || !boarding_lat || !boarding_lng) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
+    db.query(
+        'INSERT INTO ride_boarding_points (ride_id, passenger_id, boarding_lat, boarding_lng) VALUES (?, ?, ?, ?)',
+        [ride_id, passenger_id, boarding_lat, boarding_lng],
+        (err, result) => {
+            if (err) {
+                console.error('Error saving boarding point:', err);
+                return res.status(500).json({ message: 'Failed to save boarding point.' });
+            }
+            res.json({ message: 'Boarding point saved.' });
+        }
+    );
+});
+
+// Endpoint for driver to fetch all boarding points for a ride
+app.get('/api/boarding-points', (req, res) => {
+    const { ride_id } = req.query;
+    if (!ride_id) return res.status(400).json({ message: 'ride_id required.' });
+    db.query(
+        'SELECT * FROM ride_boarding_points WHERE ride_id = ?',
+        [ride_id],
+        (err, results) => {
+            if (err) {
+                console.error('Error fetching boarding points:', err);
+                return res.status(500).json({ message: 'Failed to fetch boarding points.' });
+            }
+            res.json(results);
+        }
+    );
+});
+
 // Start the Server
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);

@@ -192,6 +192,13 @@
             font-size: 24px;
             margin-bottom: 4px;
         }
+
+        .boarding-point-marker {
+            background-color: red;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
     </style>
 </head>
 
@@ -287,6 +294,23 @@
                     }
                 });
         }
+
+        function showBoardingPointsOnMap(ride_id, map) {
+            fetch(`http://localhost:3000/api/boarding-points?ride_id=${ride_id}`)
+                .then(res => res.json())
+                .then(points => {
+                    points.forEach(point => {
+                        L.marker([point.boarding_lat, point.boarding_lng], {
+                            icon: L.divIcon({
+                                className: 'boarding-point-marker',
+                                html: '<div style="background-color:red;width:16px;height:16px;border-radius:50%;"></div>'
+                            })
+                        }).addTo(map).bindPopup('Passenger Boarding Point');
+                    });
+                });
+        }
+        // Call this function after rendering the map for each ride
+        // showBoardingPointsOnMap(ride_id, map);
 
         document.addEventListener('DOMContentLoaded', function () {
             loadMyRides();
