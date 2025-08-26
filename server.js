@@ -127,6 +127,76 @@ app.get('/api/ride-details', (req, res) => {
     });
 });
 
+// API Endpoint to fetch rides posted by the logged-in user (driver)
+app.get('/api/my-offered-rides', (req, res) => {
+    const { email, user_id } = req.query;
+    if (email) {
+        db.query(
+            `SELECT r.* FROM rides r
+             JOIN users u ON r.driver_id = u.user_id
+             WHERE u.email = ?
+             ORDER BY r.created_at DESC`,
+            [email],
+            (err, results) => {
+                if (err) return res.json([]);
+                res.json(results);
+            }
+        );
+    } else if (user_id) {
+        db.query(
+            'SELECT * FROM rides WHERE driver_id = ? ORDER BY created_at DESC',
+            [user_id],
+            (err, results) => {
+                if (err) return res.json([]);
+                res.json(results);
+            }
+        );
+    } else {
+        res.json([]);
+    }
+});
+
+// Signup endpoint
+app.post('/api/signup', (req, res) => {
+    const { email, password, name } = req.body;
+    if (!email || !password || !name) {
+        return res.json({ success: false, message: 'All fields are required.' });
+    }
+    db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
+        if (err) return res.json({ success: false, message: 'Database error.' });
+        if (results.length > 0) {
+            return res.json({ success: false, message: 'Email already registered.' });
+        }
+        db.query(
+            'INSERT INTO users (name, email, user_type, password) VALUES (?, ?, ?, ?)',
+            [name, email, 'passenger', password],
+            (err, result) => {
+                if (err) return res.json({ success: false, message: 'Database error.' });
+                return res.json({ success: true, user_id: result.insertId, name, email });
+            }
+        );
+    });
+});
+
+// Login endpoint
+app.post('/api/login', (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.json({ success: false, message: 'Email and password required.' });
+    }
+    db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
+        if (err) return res.json({ success: false, message: 'Database error.' });
+        if (results.length === 0) {
+            return res.json({ success: false, message: 'User not found.' });
+        }
+        const user = results[0];
+        if (user.password !== password) {
+            return res.json({ success: false, message: 'Incorrect password.' });
+        }
+        return res.json({ success: true, user_id: user.user_id, name: user.name, email: user.email });
+    });
+});
+
 // Start the Server
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);

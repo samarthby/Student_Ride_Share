@@ -182,6 +182,12 @@
             <form>
                 <div class="form-group">
                     <div class="form-control">
+                        <div class="form-icon">📧</div>
+                        <input type="email" class="form-input" id="driverEmail" placeholder="Your Email" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="form-control">
                         <div class="form-icon">📍</div>
                         <input type="text" class="form-input" id="currentLocation" placeholder="Your current location"
                             disabled>
@@ -314,6 +320,7 @@
             });
 
             document.getElementById('postRide').addEventListener('click', function () {
+                const driverEmail = document.getElementById('driverEmail').value;
                 const sourceValue = document.getElementById('source').value;
                 const destinationValue = document.getElementById('destination').value;
                 const dateValue = document.querySelector('input[placeholder="Date (YYYY-MM-DD)"]').value;
@@ -321,7 +328,7 @@
                 const seatsValue = document.querySelector('input[placeholder="Available seats"]').value;
                 const priceValue = document.querySelector('input[placeholder="Price per seat"]').value;
 
-                if (!sourceValue || !destinationValue || !dateValue || !timeValue || !seatsValue || !priceValue) {
+                if (!driverEmail || !sourceValue || !destinationValue || !dateValue || !timeValue || !seatsValue || !priceValue) {
                     alert('Please fill in all the fields.');
                     return;
                 }
@@ -365,6 +372,7 @@
                                     routeLayer = L.polyline(polyline, { color: 'black' }).addTo(map);
 
                                     const rideDetails = {
+                                        driver_email: driverEmail,
                                         driver_id: 1,
                                         start_lat: riderLat,
                                         start_lng: riderLng,

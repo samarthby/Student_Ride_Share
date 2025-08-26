@@ -193,7 +193,7 @@
 <body>
     <div id="profile-page" class="page active">
         <div class="header">
-            <h1>John Doe</h1>
+            <h1 id="profileHeader">Profile</h1>
             <div class="devices-badge">
                 <span class="wifi-icon">📶</span>
                 <span>4 devices</span>
@@ -203,8 +203,8 @@
         <div class="profile-container">
             <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-03-26%20at%207.33.31%20PM-8CrIhpuyxXkXcsU0u0G6DrV82M5XgC.jpeg"
                 alt="Profile Picture" class="profile-image">
-            <h2 class="profile-name">John Doe</h2>
-            <p class="profile-email">john.doe@university.edu</p>
+            <h2 class="profile-name" id="profileName"></h2>
+            <p class="profile-email" id="profileEmail"></p>
 
             <div class="profile-stats">
                 <div class="stat-item">
@@ -237,7 +237,7 @@
                 </div>
                 <div class="menu-item">
                     <div class="menu-icon">🚪</div>
-                    <div class="menu-text logout">Log Out</div>
+                    <div class="menu-text logout" id="logoutBtn">Log Out</div>
                 </div>
             </div>
         </div>
@@ -261,6 +261,26 @@
             <div>Profile</div>
         </div>
     </div>
+
+    <script>
+        // Populate profile info from localStorage
+        document.addEventListener('DOMContentLoaded', function () {
+            const name = localStorage.getItem('user_name');
+            const email = localStorage.getItem('user_email');
+            if (name) {
+                document.getElementById('profileName').innerText = name;
+                document.getElementById('profileHeader').innerText = name;
+            }
+            if (email) {
+                document.getElementById('profileEmail').innerText = email;
+            }
+            // Logout
+            document.getElementById('logoutBtn').onclick = function () {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            };
+        });
+    </script>
 </body>
 
 </html>
