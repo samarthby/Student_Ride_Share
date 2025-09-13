@@ -40,12 +40,28 @@
 
                 // Draw route polyline
                 const polyline = JSON.parse(ride.route_polyline);
-                const routeLayer = L.polyline(polyline, { color: 'blue' }).addTo(map);
+                const routeLayer = L.polyline(polyline, { color: 'black' }).addTo(map);
                 map.fitBounds(routeLayer.getBounds());
 
                 // Start and end markers
-                L.marker([ride.start_lat, ride.start_lng]).addTo(map).bindPopup('Start');
-                L.marker([ride.end_lat, ride.end_lng]).addTo(map).bindPopup('Destination');
+                // ✅ Create a custom green dot icon using HTML & CSS
+                const greenDotIcon = L.divIcon({
+                    html: '<div style="background-color:green;width:18px;height:18px;border-radius:50%;border:2px solid #fff;"></div>',
+                    className: '', // remove default icon styles
+                    iconSize: [18, 18], // size of the marker
+                    iconAnchor: [9, 9]  // center it
+                });
+
+                // ✅ Start marker with green dot
+                L.marker([ride.start_lat, ride.start_lng], { icon: greenDotIcon })
+                    .addTo(map)
+                    .bindPopup('Source');
+
+                // ✅ Destination marker (default Leaflet icon)
+                L.marker([ride.end_lat, ride.end_lng])
+                    .addTo(map)
+                    .bindPopup('Destination');
+
 
                 // Show passenger details in popup
                 boardingPoints.forEach(bp => {
