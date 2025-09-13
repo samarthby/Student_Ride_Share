@@ -34,24 +34,32 @@
     <button id="recenterBtn">Recenter</button>
     <div id="map"></div>
     <script>
-        let map, currentMarker, routeLayer, startLatLng;
-        let watchId = null;
+        let map, currentMarker, routeLayer, endLatLng;
         let recenterOnUpdate = true;
 
         const urlParams = new URLSearchParams(window.location.search);
         const rideId = urlParams.get('ride_id');
 
-        function focusOnStart() {
-            if (startLatLng) {
-                map.setView(startLatLng, 20);
-            }
+        function drawRoute(currentLat, currentLng, destLat, destLng) {
+            // Call OSRM API for routing
+            const url = `https://router.project-osrm.org/route/v1/driving/${currentLng},${currentLat};${destLng},${destLat}?overview=full&geometries=geojson`;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.routes && data.routes.length > 0) {
+                        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                        if (routeLayer) map.removeLayer(routeLayer);
+                        routeLayer = L.polyline(coords, { color: 'blue' }).addTo(map);
+                    }
+                });
         }
 
         function updateCurrentLocation(position) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
+            const currentLatLng = [lat, lng];
             if (!currentMarker) {
-                currentMarker = L.marker([lat, lng], {
+                currentMarker = L.marker(currentLatLng, {
                     icon: L.divIcon({
                         className: '',
                         html: '<div style="transform: rotate(-45deg); color: #0066ff; font-size: 32px;">➤</div>',
@@ -60,10 +68,14 @@
                     })
                 }).addTo(map).bindPopup('Your Location');
             } else {
-                currentMarker.setLatLng([lat, lng]);
+                currentMarker.setLatLng(currentLatLng);
             }
             if (recenterOnUpdate) {
-                map.setView([lat, lng], 20);
+                map.setView(currentLatLng, 20);
+            }
+            // Update route polyline dynamically
+            if (endLatLng) {
+                drawRoute(lat, lng, endLatLng[0], endLatLng[1]);
             }
         }
 
@@ -72,7 +84,7 @@
                 navigator.geolocation.getCurrentPosition(function (pos) {
                     updateCurrentLocation(pos);
                 });
-                watchId = navigator.geolocation.watchPosition(function (pos) {
+                navigator.geolocation.watchPosition(function (pos) {
                     updateCurrentLocation(pos);
                 }, null, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
             } else {
@@ -90,16 +102,10 @@
                         attribution: '© OpenStreetMap'
                     }).addTo(map);
 
-                    // Draw route polyline
-                    const polyline = JSON.parse(ride.route_polyline);
-                    routeLayer = L.polyline(polyline, { color: 'blue' }).addTo(map);
+                    endLatLng = [ride.end_lat, ride.end_lng];
+                    L.marker(endLatLng).addTo(map).bindPopup('Destination');
 
-                    // Start and end markers
-                    startLatLng = [ride.start_lat, ride.start_lng];
-                    L.marker([ride.end_lat, ride.end_lng]).addTo(map).bindPopup('Destination');
-
-                    map.fitBounds(routeLayer.getBounds());
-                    focusOnStart();
+                    map.setView(endLatLng, 16);
                     startTracking();
                 });
 
@@ -107,12 +113,11 @@
                 recenterOnUpdate = true;
                 if (currentMarker) {
                     map.setView(currentMarker.getLatLng(), 20);
-                } else if (startLatLng) {
-                    map.setView(startLatLng, 20);
+                } else if (endLatLng) {
+                    map.setView(endLatLng, 20);
                 }
             };
 
-            // Stop auto recenter after manual map move
             setTimeout(() => {
                 map.on('movestart', function () {
                     recenterOnUpdate = false;
