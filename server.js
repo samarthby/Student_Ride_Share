@@ -159,8 +159,8 @@ app.get('/api/my-offered-rides', (req, res) => {
 
 // Signup endpoint
 app.post('/api/signup', (req, res) => {
-    const { email, password, name } = req.body;
-    if (!email || !password || !name) {
+    const { email, password, name, phone } = req.body;
+    if (!email || !password || !name || !phone) {
         return res.json({ success: false, message: 'All fields are required.' });
     }
     db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
@@ -169,11 +169,11 @@ app.post('/api/signup', (req, res) => {
             return res.json({ success: false, message: 'Email already registered.' });
         }
         db.query(
-            'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-            [name, email, password],
+            'INSERT INTO users (name, email, phone, password) VALUES (?, ?, ?, ?)',
+            [name, email, phone, password],
             (err, result) => {
                 if (err) return res.json({ success: false, message: 'Database error.' });
-                return res.json({ success: true, user_id: result.insertId, name, email });
+                return res.json({ success: true, user_id: result.insertId, name, email, phone });
             }
         );
     });
@@ -194,7 +194,7 @@ app.post('/api/login', (req, res) => {
         if (user.password !== password) {
             return res.json({ success: false, message: 'Incorrect password.' });
         }
-        return res.json({ success: true, user_id: user.user_id, name: user.name, email: user.email });
+        return res.json({ success: true, user_id: user.user_id, name: user.name, email: user.email, phone: user.phone });
     });
 });
 

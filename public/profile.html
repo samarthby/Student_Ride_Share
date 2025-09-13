@@ -25,7 +25,6 @@
             display: none;
             min-height: 100vh;
             padding-bottom: 70px;
-            /* Space for nav bar */
         }
 
         .page.active {
@@ -91,6 +90,12 @@
         }
 
         .profile-email {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .profile-phone {
             font-size: 16px;
             color: #666;
             margin-bottom: 24px;
@@ -205,6 +210,7 @@
                 alt="Profile Picture" class="profile-image">
             <h2 class="profile-name" id="profileName"></h2>
             <p class="profile-email" id="profileEmail"></p>
+            <p class="profile-phone" id="profilePhone"></p>
 
             <div class="profile-stats">
                 <div class="stat-item">
@@ -228,8 +234,8 @@
                     <div class="menu-text">Account Settings</div>
                 </div>
                 <div class="menu-item">
-                    <div class="menu-icon">🔒</div>
-                    <div class="menu-text">Privacy & Security</div>
+                    <div class="menu-icon">📞</div>
+                    <div class="menu-text" id="menuPhone"></div>
                 </div>
                 <div class="menu-item">
                     <div class="menu-icon">💳</div>
@@ -267,6 +273,8 @@
         document.addEventListener('DOMContentLoaded', function () {
             const name = localStorage.getItem('user_name');
             const email = localStorage.getItem('user_email');
+            const phone = localStorage.getItem('user_phone');
+
             if (name) {
                 document.getElementById('profileName').innerText = name;
                 document.getElementById('profileHeader').innerText = name;
@@ -274,6 +282,11 @@
             if (email) {
                 document.getElementById('profileEmail').innerText = email;
             }
+            if (phone) {
+                document.getElementById('profilePhone').innerText = "Phone: " + phone;
+                document.getElementById('menuPhone').innerText = "Phone: " + phone;
+            }
+
             // Logout
             document.getElementById('logoutBtn').onclick = function () {
                 localStorage.clear();

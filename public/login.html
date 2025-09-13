@@ -81,6 +81,10 @@
                 <label for="signupName">Name</label>
                 <input type="text" id="signupName" required>
             </div>
+            <div class="form-group">
+                <label for="signupPhone">Phone Number</label>
+                <input type="text" id="signupPhone" name="phone" required>
+            </div>
             <button class="btn" type="submit" id="signupBtn">Sign Up</button>
         </form>
         <div style="margin-top:16px;">
@@ -132,6 +136,7 @@
                         localStorage.setItem('user_id', data.user_id);
                         localStorage.setItem('user_name', data.name);
                         localStorage.setItem('user_email', data.email);
+                        localStorage.setItem('user_phone', data.phone); // <-- Add this!
                         window.location.href = 'profile.html';
                     } else {
                         loginMsg.innerText = data.message || 'Login failed.';
@@ -144,10 +149,11 @@
             const email = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value.trim();
             const name = document.getElementById('signupName').value.trim();
+            const phone = document.getElementById('signupPhone').value.trim();
             fetch('http://localhost:3000/api/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, name })
+                body: JSON.stringify({ email, password, name, phone })
             })
                 .then(res => res.json())
                 .then(data => {
@@ -155,6 +161,7 @@
                         localStorage.setItem('user_id', data.user_id);
                         localStorage.setItem('user_name', data.name);
                         localStorage.setItem('user_email', data.email);
+                        localStorage.setItem('user_phone', data.phone); // <-- Add this line
                         window.location.href = 'profile.html';
                     } else {
                         loginMsg.innerText = data.message || 'Signup failed.';
