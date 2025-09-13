@@ -256,6 +256,43 @@ app.get('/api/my-boarded-rides', (req, res) => {
     );
 });
 
+// Save or update driver's current location for a ride
+app.post('/api/ride-location', (req, res) => {
+    const { ride_id, current_lat, current_lng } = req.body;
+    if (!ride_id || !current_lat || !current_lng) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
+    // Upsert: if exists, update; else, insert
+    db.query(
+        `INSERT INTO ride_locations (ride_id, current_lat, current_lng)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE current_lat = VALUES(current_lat), current_lng = VALUES(current_lng), updated_at = NOW()`,
+        [ride_id, current_lat, current_lng],
+        (err) => {
+            if (err) {
+                console.error('Error saving ride location:', err);
+                return res.status(500).json({ message: 'Failed to save location.' });
+            }
+            res.json({ message: 'Location updated.' });
+        }
+    );
+});
+
+// Get latest driver's location for a ride
+app.get('/api/ride-location', (req, res) => {
+    const { ride_id } = req.query;
+    if (!ride_id) return res.status(400).json({ message: 'ride_id required.' });
+    db.query(
+        'SELECT current_lat, current_lng, updated_at FROM ride_locations WHERE ride_id = ? ORDER BY updated_at DESC LIMIT 1',
+        [ride_id],
+        (err, results) => {
+            if (err) return res.status(500).json({ message: 'Failed to fetch location.' });
+            if (!results.length) return res.status(404).json({ message: 'No location found.' });
+            res.json(results[0]);
+        }
+    );
+});
+
 // Start the Server
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);

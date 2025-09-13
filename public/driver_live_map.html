@@ -105,6 +105,17 @@
                 map.setView(currentLatLng, 20);
             }
 
+            // Send driver's location to backend
+            fetch('http://localhost:3000/api/ride-location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ride_id: rideId,
+                    current_lat: lat,
+                    current_lng: lng
+                })
+            });
+
             if (endLatLng) {
                 drawRoute(lat, lng, endLatLng[0], endLatLng[1]);
             }

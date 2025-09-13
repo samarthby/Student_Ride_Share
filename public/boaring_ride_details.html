@@ -44,24 +44,20 @@
                 map.fitBounds(routeLayer.getBounds());
 
                 // Start and end markers
-                // ✅ Create a custom green dot icon using HTML & CSS
                 const greenDotIcon = L.divIcon({
                     html: '<div style="background-color:green;width:18px;height:18px;border-radius:50%;border:2px solid #fff;"></div>',
-                    className: '', // remove default icon styles
-                    iconSize: [18, 18], // size of the marker
-                    iconAnchor: [9, 9]  // center it
+                    className: '',
+                    iconSize: [18, 18],
+                    iconAnchor: [9, 9]
                 });
 
-                // ✅ Start marker with green dot
                 L.marker([ride.start_lat, ride.start_lng], { icon: greenDotIcon })
                     .addTo(map)
                     .bindPopup('Source');
 
-                // ✅ Destination marker (default Leaflet icon)
                 L.marker([ride.end_lat, ride.end_lng])
                     .addTo(map)
                     .bindPopup('Destination');
-
 
                 // Show passenger details in popup
                 boardingPoints.forEach(bp => {
@@ -72,9 +68,68 @@
                         })
                     }).addTo(map).bindPopup(
                         `<b>Passenger:</b> ${bp.passenger_name || 'N/A'}<br>
-                 <b>Phone:</b> ${bp.passenger_phone || 'N/A'}`
+                     <b>Phone:</b> ${bp.passenger_phone || 'N/A'}`
                     );
                 });
+
+                // Driver marker logic with dynamic rotation
+                let driverMarker = null;
+                let lastDriverLatLng = null;
+
+                function calculateBearing(lat1, lng1, lat2, lng2) {
+                    const toRad = deg => deg * Math.PI / 180;
+                    const toDeg = rad => rad * 180 / Math.PI;
+
+                    const dLon = toRad(lng2 - lng1);
+                    lat1 = toRad(lat1);
+                    lat2 = toRad(lat2);
+
+                    const y = Math.sin(dLon) * Math.cos(lat2);
+                    const x = Math.cos(lat1) * Math.sin(lat2) -
+                        Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+                    let brng = Math.atan2(y, x);
+                    brng = toDeg(brng);
+                    return (brng + 360) % 360;
+                }
+
+                function updateDriverMarker(lat, lng) {
+                    let rotation = -45; // default
+                    if (lastDriverLatLng) {
+                        rotation = calculateBearing(lastDriverLatLng[0], lastDriverLatLng[1], lat, lng);
+                    }
+                    lastDriverLatLng = [lat, lng];
+
+                    if (!driverMarker) {
+                        driverMarker = L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                className: '',
+                                html: `<div style="transform: rotate(${rotation}deg); color: #0066ff; font-size: 32px;">➤</div>`,
+                                iconSize: [45, 45],
+                                iconAnchor: [16, 16]
+                            })
+                        }).addTo(map).bindPopup('Driver Location');
+                    } else {
+                        driverMarker.setLatLng([lat, lng]);
+                        driverMarker.setIcon(L.divIcon({
+                            className: '',
+                            html: `<div style="transform: rotate(${rotation}deg); color: #0066ff; font-size: 32px;">➤</div>`,
+                            iconSize: [45, 45],
+                            iconAnchor: [16, 16]
+                        }));
+                    }
+                }
+
+                // Poll every 5 seconds
+                setInterval(() => {
+                    fetch(`http://localhost:3000/api/ride-location?ride_id=${rideId}`)
+                        .then(res => res.json())
+                        .then(loc => {
+                            if (loc.current_lat && loc.current_lng) {
+                                updateDriverMarker(loc.current_lat, loc.current_lng);
+                            }
+                        });
+                }, 5000);
+
             }).catch(err => {
                 alert('Failed to load ride or boarding points.');
                 console.error(err);
