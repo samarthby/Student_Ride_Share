@@ -293,8 +293,18 @@
                                     </div>
                                 </div>
                                 <div class="ride-passengers">${ride.available_seats} seats available</div>
+                                <button class="btn-start-ride" data-rideid="${ride.ride_id}">Start</button>
                             `;
                             section.appendChild(div);
+                        });
+
+                        // Attach click handlers to start buttons AFTER they are in the DOM
+                        section.querySelectorAll('.btn-start-ride').forEach(btn => {
+                            btn.onclick = function (e) {
+                                e.stopPropagation();
+                                const rideId = btn.getAttribute('data-rideid');
+                                window.location.href = `driver_live_map.html?ride_id=${rideId}`;
+                            };
                         });
                     }
                 });

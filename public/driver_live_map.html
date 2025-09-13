@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Live Ride Tracking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #recenterBtn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 1001;
+            background: #0066ff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 18px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+
+<body>
+    <button id="recenterBtn">Recenter</button>
+    <div id="map"></div>
+    <script>
+        let map, currentMarker, routeLayer, startLatLng;
+        let watchId = null;
+        let recenterOnUpdate = true;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const rideId = urlParams.get('ride_id');
+
+        function focusOnStart() {
+            if (startLatLng) {
+                map.setView(startLatLng, 20);
+            }
+        }
+
+        function updateCurrentLocation(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            if (!currentMarker) {
+                currentMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: '',
+                        html: '<div style="transform: rotate(-45deg); color: #0066ff; font-size: 32px;">➤</div>',
+                        iconSize: [45, 45],
+                        iconAnchor: [16, 16]
+                    })
+                }).addTo(map).bindPopup('Your Location');
+            } else {
+                currentMarker.setLatLng([lat, lng]);
+            }
+            if (recenterOnUpdate) {
+                map.setView([lat, lng], 20);
+            }
+        }
+
+        function startTracking() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    updateCurrentLocation(pos);
+                });
+                watchId = navigator.geolocation.watchPosition(function (pos) {
+                    updateCurrentLocation(pos);
+                }, null, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch(`http://localhost:3000/api/ride-details?ride_id=${rideId}`)
+                .then(res => res.json())
+                .then(ride => {
+                    map = L.map('map');
+                    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    }).addTo(map);
+
+                    // Draw route polyline
+                    const polyline = JSON.parse(ride.route_polyline);
+                    routeLayer = L.polyline(polyline, { color: 'blue' }).addTo(map);
+
+                    // Start and end markers
+                    startLatLng = [ride.start_lat, ride.start_lng];
+                    L.marker([ride.end_lat, ride.end_lng]).addTo(map).bindPopup('Destination');
+
+                    map.fitBounds(routeLayer.getBounds());
+                    focusOnStart();
+                    startTracking();
+                });
+
+            document.getElementById('recenterBtn').onclick = function () {
+                recenterOnUpdate = true;
+                if (currentMarker) {
+                    map.setView(currentMarker.getLatLng(), 20);
+                } else if (startLatLng) {
+                    map.setView(startLatLng, 20);
+                }
+            };
+
+            // Stop auto recenter after manual map move
+            setTimeout(() => {
+                map.on('movestart', function () {
+                    recenterOnUpdate = false;
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>
