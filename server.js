@@ -217,12 +217,15 @@ app.post('/api/boarding-point', (req, res) => {
     );
 });
 
-// Endpoint for driver to fetch all boarding points for a ride
+// Enhanced endpoint for boarding points with passenger info
 app.get('/api/boarding-points', (req, res) => {
     const { ride_id } = req.query;
     if (!ride_id) return res.status(400).json({ message: 'ride_id required.' });
     db.query(
-        'SELECT * FROM ride_boarding_points WHERE ride_id = ?',
+        `SELECT bp.*, u.name AS passenger_name, u.phone AS passenger_phone
+         FROM ride_boarding_points bp
+         JOIN users u ON bp.passenger_id = u.user_id
+         WHERE bp.ride_id = ?`,
         [ride_id],
         (err, results) => {
             if (err) {
