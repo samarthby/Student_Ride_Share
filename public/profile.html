@@ -203,41 +203,24 @@
         </div>
 
         <div class="profile-container">
-            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-03-26%20at%207.33.31%20PM-8CrIhpuyxXkXcsU0u0G6DrV82M5XgC.jpeg"
-                alt="Profile Picture" class="profile-image">
-            <h2 class="profile-name" id="profileName"></h2>
-            <p class="profile-email" id="profileEmail"></p>
-            <p class="profile-phone" id="profilePhone"></p>
 
-            <div class="profile-stats">
-                <div class="stat-item">
-                    <div class="stat-icon">⭐</div>
-                    <div class="stat-value">4.8</div>
-                    <div class="stat-label">Rating</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">15</div>
-                    <div class="stat-label">Rides</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-icon" style="color: #4caf50;">✓</div>
-                    <div class="stat-label">Verified</div>
-                </div>
-            </div>
+            <h2 class="profile-name" id="profileName"></h2>
+
 
             <div class="menu-list">
                 <div class="menu-item">
                     <div class="menu-icon">⚙️</div>
-                    <div class="menu-text">Account Settings</div>
+                    <div class="menu-text">Edit Profile</div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">✉️</div>
+                    <div class="menu-text" id="menuEmail"></div>
                 </div>
                 <div class="menu-item">
                     <div class="menu-icon">📞</div>
                     <div class="menu-text" id="menuPhone"></div>
                 </div>
-                <div class="menu-item">
-                    <div class="menu-icon">💳</div>
-                    <div class="menu-text">Payment Methods</div>
-                </div>
+
                 <div class="menu-item">
                     <div class="menu-icon">🚪</div>
                     <div class="menu-text logout" id="logoutBtn">Log Out</div>
@@ -274,13 +257,11 @@
 
             if (name) {
                 document.getElementById('profileName').innerText = name;
-                document.getElementById('profileHeader').innerText = name;
             }
             if (email) {
-                document.getElementById('profileEmail').innerText = email;
+                document.getElementById('menuEmail').innerText = "Email: " + email;
             }
             if (phone) {
-                document.getElementById('profilePhone').innerText = "Phone: " + phone;
                 document.getElementById('menuPhone').innerText = "Phone: " + phone;
             }
 
