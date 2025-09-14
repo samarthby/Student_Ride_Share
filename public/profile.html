@@ -23,7 +23,8 @@
 
         .page {
             min-height: 100vh;
-            padding-bottom: 70px;
+            padding-bottom: 120px;
+            /* Space for logout + nav bar */
         }
 
         .header {
@@ -96,8 +97,30 @@
             font-weight: 500;
         }
 
-        .logout {
-            color: #ff3b30;
+        /* Big Logout Button */
+        .logout-btn {
+            position: fixed;
+            bottom: 70px;
+            /* Above nav bar */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1100;
+        }
+
+        .logout-btn:hover {
+            background: #e02b25;
         }
 
         .nav-bar {
@@ -220,13 +243,12 @@
                     <div class="menu-icon">📞</div>
                     <div class="menu-text" id="menuPhone"></div>
                 </div>
-                <div class="menu-item">
-                    <div class="menu-icon">🚪</div>
-                    <div class="menu-text logout" id="logoutBtn">Log Out</div>
-                </div>
             </div>
         </div>
     </div>
+
+    <!-- Big Logout Button -->
+    <button class="logout-btn" id="logoutBtn">Log Out</button>
 
     <!-- Edit Profile Modal -->
     <div class="modal" id="editModal">
