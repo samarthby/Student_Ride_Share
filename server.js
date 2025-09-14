@@ -92,7 +92,7 @@ app.get('/api/search-rides', (req, res) => {
     const query = `
         SELECT r.ride_id, r.driver_id, u.name AS driver_name, r.source_name, r.destination_name,
                r.start_lat, r.start_lng, r.end_lat, r.end_lng,
-               r.time, 
+               r.date, r.time, 
                (r.available_seats - IFNULL(bp.boarded,0)) AS available_seats,
                r.price_per_seat, r.vehicle_type
         FROM rides r
@@ -103,17 +103,17 @@ app.get('/api/search-rides', (req, res) => {
             GROUP BY ride_id
         ) bp ON r.ride_id = bp.ride_id
         WHERE r.destination_name LIKE ? AND (r.available_seats - IFNULL(bp.boarded,0)) > 0
+        ORDER BY r.date, r.time
     `;
 
     db.query(query, [`%${destination}%`], (err, results) => {
         if (err) {
-            console.error('Error fetching rides:', err);
-            return res.status(500).json({ error: 'Internal server error' });
+            return res.status(500).json({ error: 'Database error' });
         }
-
         res.json(results);
     });
 });
+
 
 // API Endpoint to Fetch Ride Details by ID
 app.get('/api/ride-details', (req, res) => {
