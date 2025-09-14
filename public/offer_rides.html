@@ -74,14 +74,25 @@
             padding: 16px;
         }
 
+        form {
+            height: 38vh;
+            /* total form height ~38% of screen */
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* smaller spacing between rows */
+            overflow-y: hidden;
+            /* prevent scrolling, keep compact */
+        }
+
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 1px;
         }
 
         .form-control {
             background-color: white;
             border-radius: 8px;
-            padding: 16px;
+            padding: 8px;
             display: flex;
             align-items: center;
             width: 100%;
@@ -99,7 +110,7 @@
         .form-input {
             border: none;
             outline: none;
-            font-size: 16px;
+            font-size: 14px;
             width: 100%;
             background: transparent;
         }
@@ -118,18 +129,28 @@
             color: white;
             border: none;
             border-radius: 8px;
-            padding: 16px;
+            padding: 10px;
             width: 100%;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            margin-top: 16px;
+            margin-top: 5px;
+        }
+
+        form {
+            height: 290px;
+            /* total form height ~38% of screen */
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* smaller spacing between rows */
+            overflow-y: hidden;
         }
 
         #map {
-            height: 300px;
+            height: 275px;
             width: 100%;
-            margin-top: 16px;
+            margin-top: 1px;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -172,7 +193,6 @@
     <div id="offer-ride-page" class="page active">
         <div class="header">
             <h1>Offer a Ride</h1>
-
         </div>
 
         <div class="container">
@@ -236,7 +256,7 @@
 
                     <div class="form-group">
                         <div class="form-control">
-                            <div class="form-icon">💲</div>
+                            <div class="form-icon">₹</div>
                             <input type="text" class="form-input" placeholder="Price per seat">
                         </div>
                     </div>
