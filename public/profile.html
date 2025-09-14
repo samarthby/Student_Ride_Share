@@ -50,6 +50,21 @@
             padding: 24px 16px;
         }
 
+        /* Avatar */
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+
         .profile-name {
             font-size: 28px;
             font-weight: 700;
@@ -187,6 +202,9 @@
         </div>
 
         <div class="profile-container">
+            <!-- Dynamic Avatar -->
+            <div id="profileAvatar" class="profile-avatar"></div>
+
             <h2 class="profile-name" id="profileName"></h2>
 
             <div class="menu-list">
@@ -254,8 +272,26 @@
         const editProfileBtn = document.getElementById("editProfileBtn");
         const cancelBtn = document.getElementById("cancelBtn");
         const saveBtn = document.getElementById("saveBtn");
-
         let userId;
+
+        // Generate random background color for avatar
+        function getRandomColor(name) {
+            const colors = ["#FF5733", "#33B5FF", "#9B33FF", "#33FF57", "#FFC300", "#FF33A6"];
+            const index = name ? name.charCodeAt(0) % colors.length : 0;
+            return colors[index];
+        }
+
+        // Set avatar with first letter
+        function setAvatar(name) {
+            const avatar = document.getElementById("profileAvatar");
+            if (name && name.length > 0) {
+                avatar.innerText = name[0];
+                avatar.style.backgroundColor = getRandomColor(name);
+            } else {
+                avatar.innerText = "?";
+                avatar.style.backgroundColor = "#999";
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function () {
             const name = localStorage.getItem('user_name');
@@ -266,6 +302,8 @@
             if (name) document.getElementById('profileName').innerText = name;
             if (email) document.getElementById('menuEmail').innerText = "Email: " + email;
             if (phone) document.getElementById('menuPhone').innerText = "Phone: " + phone;
+
+            setAvatar(name);
 
             // Logout
             document.getElementById('logoutBtn').onclick = function () {
@@ -306,15 +344,14 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        // Update local storage
                         localStorage.setItem('user_name', updatedName);
                         localStorage.setItem('user_email', updatedEmail);
                         localStorage.setItem('user_phone', updatedPhone);
 
-                        // Update UI
                         document.getElementById('profileName').innerText = updatedName;
                         document.getElementById('menuEmail').innerText = "Email: " + updatedEmail;
                         document.getElementById('menuPhone').innerText = "Phone: " + updatedPhone;
+                        setAvatar(updatedName);
 
                         alert("✅ Profile updated successfully!");
                         editModal.style.display = "none";
