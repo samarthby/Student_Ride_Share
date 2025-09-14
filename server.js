@@ -35,10 +35,10 @@ app.post('/api/offer-ride', (req, res) => {
         driver_id, start_lat, start_lng,
         end_lat, end_lng, route_polyline,
         source_name, destination_name, date, time,
-        available_seats, price_per_seat
+        available_seats, price_per_seat,
+        vehicle_type, vehicle_number // <-- new fields
     } = req.body;
 
-    // Remove user_type check, just check if user exists
     const checkDriverSql = 'SELECT * FROM users WHERE user_id = ?';
     db.query(checkDriverSql, [driver_id], (err, results) => {
         if (err) {
@@ -55,16 +55,16 @@ app.post('/api/offer-ride', (req, res) => {
                 driver_id, start_lat, start_lng,
                 end_lat, end_lng, route_polyline,
                 source_name, destination_name, date, time,
-                available_seats, price_per_seat, created_at
+                available_seats, price_per_seat, vehicle_type, vehicle_number, created_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
 
         db.query(insertRideSql, [
             driver_id, start_lat, start_lng,
             end_lat, end_lng, route_polyline,
             source_name, destination_name, date, time,
-            available_seats, price_per_seat
+            available_seats, price_per_seat, vehicle_type, vehicle_number
         ], (err, result) => {
             if (err) {
                 console.error('Error inserting ride details:', err);
@@ -90,11 +90,19 @@ app.get('/api/search-rides', (req, res) => {
     }
 
     const query = `
-        SELECT ride_id, driver_id, source_name, destination_name,
-               start_lat, start_lng, end_lat, end_lng,
-               time, available_seats, price_per_seat
-        FROM rides
-        WHERE destination_name LIKE ?
+        SELECT r.ride_id, r.driver_id, u.name AS driver_name, r.source_name, r.destination_name,
+               r.start_lat, r.start_lng, r.end_lat, r.end_lng,
+               r.time, 
+               (r.available_seats - IFNULL(bp.boarded,0)) AS available_seats,
+               r.price_per_seat, r.vehicle_type
+        FROM rides r
+        JOIN users u ON r.driver_id = u.user_id
+        LEFT JOIN (
+            SELECT ride_id, COUNT(*) AS boarded
+            FROM ride_boarding_points
+            GROUP BY ride_id
+        ) bp ON r.ride_id = bp.ride_id
+        WHERE r.destination_name LIKE ? AND (r.available_seats - IFNULL(bp.boarded,0)) > 0
     `;
 
     db.query(query, [`%${destination}%`], (err, results) => {

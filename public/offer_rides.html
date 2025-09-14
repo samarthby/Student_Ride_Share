@@ -367,6 +367,8 @@
                 const timeValue = document.querySelector('input[placeholder="Time (HH:MM AM/PM)"]').value;
                 const seatsValue = document.querySelector('input[placeholder="Available seats"]').value;
                 const priceValue = document.querySelector('input[placeholder="Price per seat"]').value;
+                const vehicleType = document.getElementById('vehicleType').value;
+                const vehicleNumber = document.getElementById('vehicleNumber').value;
 
                 if (
                     !driverEmail || !driverId ||
@@ -434,7 +436,9 @@
                                         date: dateValue,
                                         time: timeValue,
                                         available_seats: Number(seatsValue),
-                                        price_per_seat: Number(priceValue)
+                                        price_per_seat: Number(priceValue),
+                                        vehicle_type: vehicleType,
+                                        vehicle_number: vehicleNumber
                                     };
 
                                     fetch('http://localhost:3000/api/offer-ride', {

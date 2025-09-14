@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS rides (
     price_per_seat DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (driver_id) REFERENCES users(user_id)
+    ADD COLUMN vehicle_type VARCHAR(20) DEFAULT NULL,
+    ADD COLUMN vehicle_number VARCHAR(32) DEFAULT NULL;
 );
 
 

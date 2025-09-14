@@ -252,10 +252,11 @@
                             data.forEach(ride => {
                                 const rideCard = document.createElement('div');
                                 rideCard.classList.add('ride-card');
+                                const vehicleSymbol = ride.vehicle_type === 'Car' ? '🚗' : (ride.vehicle_type === 'Bike' ? '🏍️' : '');
                                 rideCard.innerHTML = `
                             <div class="ride-header">
-                                <div class="driver-name">${ride.driver_name}</div>
-                                <div class="ride-price">$${ride.price_per_seat}</div>
+                                <div class="driver-name">${vehicleSymbol} ${ride.driver_name || 'Driver'}</div>
+                                <div class="ride-price">₹${ride.price_per_seat}</div>
                             </div>
                             <div class="ride-route">
                                 <span class="location-icon">📍</span>
