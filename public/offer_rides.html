@@ -345,7 +345,7 @@
                     return;
                 }
 
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destinationValue)}`)
+                fetch(`http://localhost:3000/api/geocode?q=${encodeURIComponent(destinationValue)}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.length > 0) {

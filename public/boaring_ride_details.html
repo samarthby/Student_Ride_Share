@@ -96,7 +96,7 @@
                     L.marker([bp.boarding_lat, bp.boarding_lng], {
                         icon: L.divIcon({
                             className: 'boarding-point-marker',
-                            html: '<div style="background-color:red;width:18px;height:18px;border-radius:50%;border:2px solid #fff;"></div>'
+                            html: '<div style="background-color:blue;width:18px;height:18px;border-radius:50%;border:2px solid #fff;"></div>'
                         })
                     }).addTo(map).bindPopup(
                         `<b>Passenger:</b> ${bp.passenger_name || 'N/A'}<br>

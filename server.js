@@ -247,6 +247,7 @@ app.get('/api/my-boarded-rides', (req, res) => {
     db.query(
         `SELECT r.ride_id, r.source_name, r.destination_name, r.date, r.time, r.route_polyline, 
                 r.start_lat, r.start_lng, r.end_lat, r.end_lng, 
+                r.price_per_seat,  -- <-- add this line
                 bp.boarding_lat, bp.boarding_lng
          FROM ride_boarding_points bp
          JOIN rides r ON bp.ride_id = r.ride_id
@@ -258,7 +259,6 @@ app.get('/api/my-boarded-rides', (req, res) => {
         }
     );
 });
-
 
 // Geocoding proxy endpoint (fixes CORS/403 for Nominatim)
 app.get('/api/geocode', async (req, res) => {

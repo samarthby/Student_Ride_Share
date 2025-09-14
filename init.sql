@@ -31,18 +31,7 @@ CREATE TABLE IF NOT EXISTS rides (
     FOREIGN KEY (driver_id) REFERENCES users(user_id)
 );
 
--- Passenger Requests table (no change)
-CREATE TABLE IF NOT EXISTS passenger_requests (
-    request_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    ride_id INT NOT NULL,
-    passenger_id INT NOT NULL,
-    boarding_lat DECIMAL(10,8) NOT NULL,
-    boarding_lng DECIMAL(11,8) NOT NULL,
-    status ENUM('pending','confirmed','rejected') DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ride_id) REFERENCES rides(ride_id),
-    FOREIGN KEY (passenger_id) REFERENCES users(user_id)
-);
+
 
 -- Ride History table (no change)
 CREATE TABLE IF NOT EXISTS ride_history (
@@ -56,15 +45,6 @@ CREATE TABLE IF NOT EXISTS ride_history (
     FOREIGN KEY (passenger_id) REFERENCES users(user_id)
 );
 
--- Ride Locations (for live tracking, no change)
-CREATE TABLE IF NOT EXISTS ride_locations (
-    location_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    ride_id INT NOT NULL,
-    current_lat DECIMAL(10,8) NOT NULL,
-    current_lng DECIMAL(11,8) NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (ride_id) REFERENCES rides(ride_id)
-);
 
 -- Ride Boarding Points table (newly added)
 CREATE TABLE IF NOT EXISTS ride_boarding_points (

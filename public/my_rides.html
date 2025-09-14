@@ -48,116 +48,98 @@
             font-weight: 700;
         }
 
-        .devices-badge {
-            background-color: #333;
-            color: white;
-            border-radius: 20px;
-            padding: 6px 12px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .wifi-icon {
-            color: #0066ff;
-            font-size: 18px;
-        }
-
         .container {
             padding: 16px;
         }
 
         .section-title {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 16px;
+            margin: 20px 0 12px;
+            color: #444;
         }
 
-        .rides-section {
-            margin-bottom: 24px;
-        }
-
+        /* Ride Card */
         .ride-item {
             background-color: white;
             border-radius: 12px;
             padding: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             margin-bottom: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
         }
 
-        .ride-status {
+        .ride-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .ride-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            font-size: 14px;
+            color: #666;
         }
 
-        .status-label {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .status-badge.active {
-            background-color: #e3f2fd;
-            color: #0066ff;
-        }
-
-        .status-badge.confirmed {
-            background-color: #e8f5e9;
-            color: #4caf50;
-        }
-
-        .ride-info {
-            margin-bottom: 12px;
+        .ride-top div {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .ride-route {
             display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            gap: 8px;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .location-icon {
-            color: #666;
-            font-size: 18px;
-        }
-
-        .route-arrow {
-            color: #666;
-            margin: 0 8px;
-        }
-
-        .ride-date {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 12px;
-        }
-
-        .date-item {
+        .route-point {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #666;
-            font-size: 14px;
+            gap: 10px;
+            font-size: 15px;
+            color: #333;
         }
 
-        .ride-passengers {
-            color: #666;
-            font-size: 14px;
+        .route-point .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
         }
 
-        .ride-driver {
-            color: #666;
+        .dot.start {
+            background-color: green;
+        }
+
+        .dot.end {
+            background-color: red;
+        }
+
+        .route-line {
+            margin-left: 6px;
+            height: 14px;
+            border-left: 2px dashed #999;
+        }
+
+        .btn-start {
+            margin-top: 12px;
+            width: 100%;
+            padding: 10px;
+            background-color: #0066ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
             font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn-start:hover {
+            background-color: #0050cc;
         }
 
         .nav-bar {
@@ -188,15 +170,8 @@
         }
 
         .nav-icon {
-            font-size: 24px;
+            font-size: 22px;
             margin-bottom: 4px;
-        }
-
-        .boarding-point-marker {
-            background-color: red;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
         }
     </style>
 </head>
@@ -205,10 +180,6 @@
     <div id="my-rides-page" class="page active">
         <div class="header">
             <h1>My Rides</h1>
-            <div class="devices-badge">
-                <span class="wifi-icon">📶</span>
-                <span>4 devices</span>
-            </div>
         </div>
 
         <div class="container">
@@ -216,6 +187,7 @@
             <div class="rides-section" id="myRidesSection">
                 <!-- User's rides as driver will be loaded here -->
             </div>
+
             <h2 class="section-title">Your Boarded Rides</h2>
             <div class="rides-section" id="myBoardedSection">
                 <!-- User's rides as passenger will be loaded here -->
@@ -243,18 +215,33 @@
     </div>
 
     <script>
+        // --- Format Date ---
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const d = new Date(dateString);
+            return d.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+
+        // --- Format Time ---
+        function formatTime(timeString) {
+            if (!timeString) return '';
+            return timeString.slice(0, 5); // HH:MM
+        }
+
         function loadMyRides() {
             const userEmail = localStorage.getItem('user_email');
             const userId = localStorage.getItem('user_id');
             const section = document.getElementById('myRidesSection');
             const boardedSection = document.getElementById('myBoardedSection');
+
             // Driver rides
             if (!userEmail) {
                 section.innerHTML = '<div style="color:#888;">Please login to see your rides.</div>';
                 boardedSection.innerHTML = '';
                 return;
             }
-            fetch(`http://localhost:3000/api/my-offered-rides?email=${encodeURIComponent(userEmail)}`)
+
+            fetch(`http://localhost:3000/api/my-offered-rides?email=${encodeURIComponent(userEmail)}&t=${Date.now()}`)
                 .then(res => res.json())
                 .then(rides => {
                     section.innerHTML = '';
@@ -264,41 +251,25 @@
                         rides.forEach(ride => {
                             const div = document.createElement('div');
                             div.className = 'ride-item';
-                            div.style.cursor = 'pointer';
-                            div.onclick = function () {
-                                window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
-                            };
+                            div.onclick = () => window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
+
                             div.innerHTML = `
-                                <div class="ride-status">
-                                    <div class="status-label">You are driving</div>
-                                    <div class="status-badge active">Active</div>
-                                </div>
-                                <div class="ride-info">
-                                    <div class="ride-route">
-                                        <span class="location-icon">📍</span>
-                                        <span>${ride.source_name}</span>
-                                        <span class="route-arrow">→</span>
-                                        <span>${ride.destination_name}</span>
-                                    </div>
-                                </div>
-                                <div class="ride-date">
-                                    <div class="date-item">
-                                        <span>📅</span>
-                                        <span>${ride.date}</span>
-                                    </div>
-                                    <div class="date-item">
-                                        <span>🕒</span>
-                                        <span>${ride.time}</span>
-                                    </div>
-                                </div>
-                                <div class="ride-passengers">${ride.available_seats} seats available</div>
-                                <button class="btn-start-ride" data-rideid="${ride.ride_id}">Start</button>
-                            `;
+                <div class="ride-top">
+                  <div>📅 ${formatDate(ride.date)}</div>
+                  <div>🕒 ${formatTime(ride.time)}</div>
+                  <div>₹ ${ride.price_per_seat || '-'}</div>
+                </div>
+                <div class="ride-route">
+                  <div class="route-point"><span class="dot start"></span> ${ride.source_name}</div>
+                  <div class="route-line"></div>
+                  <div class="route-point"><span class="dot end"></span> ${ride.destination_name}</div>
+                </div>
+                <button class="btn-start" data-rideid="${ride.ride_id}">Start Ride</button>
+              `;
                             section.appendChild(div);
                         });
 
-                        // Attach click handlers to start buttons AFTER they are in the DOM
-                        section.querySelectorAll('.btn-start-ride').forEach(btn => {
+                        section.querySelectorAll('.btn-start').forEach(btn => {
                             btn.onclick = function (e) {
                                 e.stopPropagation();
                                 const rideId = btn.getAttribute('data-rideid');
@@ -308,12 +279,12 @@
                     }
                 });
 
-            // Passenger rides (boarded rides)
+            // Passenger rides
             if (!userId) {
                 boardedSection.innerHTML = '';
                 return;
             }
-            fetch(`http://localhost:3000/api/my-boarded-rides?passenger_id=${userId}`)
+            fetch(`http://localhost:3000/api/my-boarded-rides?passenger_id=${userId}&t=${Date.now()}`)
                 .then(res => res.json())
                 .then(rides => {
                     boardedSection.innerHTML = '';
@@ -323,40 +294,20 @@
                         rides.forEach(ride => {
                             const div = document.createElement('div');
                             div.className = 'ride-item';
-                            div.style.cursor = 'pointer';
-                            div.onclick = function () {
-                                window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
-                            };
+                            div.onclick = () => window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
+
                             div.innerHTML = `
-                                <div class="ride-status">
-                                    <div class="status-label">You are a passenger</div>
-                                    <div class="status-badge confirmed">Confirmed</div>
-                                </div>
-                                <div class="ride-info">
-                                    <div class="ride-route">
-                                        <span class="location-icon">📍</span>
-                                        <span>${ride.source_name}</span>
-                                        <span class="route-arrow">→</span>
-                                        <span>${ride.destination_name}</span>
-                                    </div>
-                                </div>
-                                <div class="ride-date">
-                                    <div class="date-item">
-                                        <span>📅</span>
-                                        <span>${ride.date}</span>
-                                    </div>
-                                    <div class="date-item">
-                                        <span>🕒</span>
-                                        <span>${ride.time}</span>
-                                    </div>
-                                </div>
-                                <div class="ride-passengers">
-                                    Boarding at: ${ride.boarding_lat !== undefined && ride.boarding_lng !== undefined
-                                    ? `${Number(ride.boarding_lat).toFixed(5)}, ${Number(ride.boarding_lng).toFixed(5)}`
-                                    : 'N/A'
-                                }
-                                </div>
-                            `;
+                <div class="ride-top">
+                  <div>📅 ${formatDate(ride.date)}</div>
+                  <div>🕒 ${formatTime(ride.time)}</div>
+                  <div>₹ ${ride.price_per_seat || '-'}</div>
+                </div>
+                <div class="ride-route">
+                  <div class="route-point"><span class="dot start"></span> ${ride.source_name}</div>
+                  <div class="route-line"></div>
+                  <div class="route-point"><span class="dot end"></span> ${ride.destination_name}</div>
+                </div>
+              `;
                             boardedSection.appendChild(div);
                         });
                     }
