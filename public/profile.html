@@ -22,13 +22,8 @@
         }
 
         .page {
-            display: none;
             min-height: 100vh;
             padding-bottom: 70px;
-        }
-
-        .page.active {
-            display: block;
         }
 
         .header {
@@ -48,26 +43,6 @@
             font-weight: 700;
         }
 
-        .devices-badge {
-            background-color: #333;
-            color: white;
-            border-radius: 20px;
-            padding: 6px 12px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .wifi-icon {
-            color: #0066ff;
-            font-size: 18px;
-        }
-
-        .container {
-            padding: 16px;
-        }
-
         .profile-container {
             display: flex;
             flex-direction: column;
@@ -75,62 +50,10 @@
             padding: 24px 16px;
         }
 
-        .profile-image {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 16px;
-        }
-
         .profile-name {
             font-size: 28px;
             font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .profile-email {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .profile-phone {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 24px;
-        }
-
-        .profile-stats {
-            display: flex;
-            width: 100%;
-            justify-content: space-around;
-            margin-bottom: 32px;
-            border-bottom: 1px solid #eaeaea;
-            padding-bottom: 24px;
-        }
-
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .stat-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-            color: #ffc107;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: #666;
+            margin-bottom: 16px;
         }
 
         .menu-list {
@@ -142,6 +65,7 @@
             align-items: center;
             padding: 16px 0;
             border-bottom: 1px solid #eaeaea;
+            cursor: pointer;
         }
 
         .menu-icon {
@@ -192,6 +116,67 @@
             font-size: 24px;
             margin-bottom: 4px;
         }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 16px;
+        }
+
+        .modal-content label {
+            display: block;
+            margin: 8px 0 4px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 16px;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn.save {
+            background: #0066ff;
+            color: white;
+        }
+
+        .btn.cancel {
+            background: #ddd;
+        }
     </style>
 </head>
 
@@ -199,16 +184,13 @@
     <div id="profile-page" class="page active">
         <div class="header">
             <h1 id="profileHeader">Profile</h1>
-
         </div>
 
         <div class="profile-container">
-
             <h2 class="profile-name" id="profileName"></h2>
 
-
             <div class="menu-list">
-                <div class="menu-item">
+                <div class="menu-item" id="editProfileBtn">
                     <div class="menu-icon">⚙️</div>
                     <div class="menu-text">Edit Profile</div>
                 </div>
@@ -220,11 +202,30 @@
                     <div class="menu-icon">📞</div>
                     <div class="menu-text" id="menuPhone"></div>
                 </div>
-
                 <div class="menu-item">
                     <div class="menu-icon">🚪</div>
                     <div class="menu-text logout" id="logoutBtn">Log Out</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h2>Edit Profile</h2>
+            <label for="editName">Name</label>
+            <input type="text" id="editName">
+
+            <label for="editEmail">Email</label>
+            <input type="email" id="editEmail">
+
+            <label for="editPhone">Phone</label>
+            <input type="text" id="editPhone">
+
+            <div class="modal-buttons">
+                <button class="btn cancel" id="cancelBtn">Cancel</button>
+                <button class="btn save" id="saveBtn">Save</button>
             </div>
         </div>
     </div>
@@ -249,21 +250,22 @@
     </div>
 
     <script>
-        // Populate profile info from localStorage
+        const editModal = document.getElementById("editModal");
+        const editProfileBtn = document.getElementById("editProfileBtn");
+        const cancelBtn = document.getElementById("cancelBtn");
+        const saveBtn = document.getElementById("saveBtn");
+
+        let userId;
+
         document.addEventListener('DOMContentLoaded', function () {
             const name = localStorage.getItem('user_name');
             const email = localStorage.getItem('user_email');
             const phone = localStorage.getItem('user_phone');
+            userId = localStorage.getItem('user_id');
 
-            if (name) {
-                document.getElementById('profileName').innerText = name;
-            }
-            if (email) {
-                document.getElementById('menuEmail').innerText = "Email: " + email;
-            }
-            if (phone) {
-                document.getElementById('menuPhone').innerText = "Phone: " + phone;
-            }
+            if (name) document.getElementById('profileName').innerText = name;
+            if (email) document.getElementById('menuEmail').innerText = "Email: " + email;
+            if (phone) document.getElementById('menuPhone').innerText = "Phone: " + phone;
 
             // Logout
             document.getElementById('logoutBtn').onclick = function () {
@@ -271,6 +273,60 @@
                 window.location.href = 'login.html';
             };
         });
+
+        // Open modal
+        editProfileBtn.onclick = function () {
+            document.getElementById("editName").value = localStorage.getItem('user_name') || "";
+            document.getElementById("editEmail").value = localStorage.getItem('user_email') || "";
+            document.getElementById("editPhone").value = localStorage.getItem('user_phone') || "";
+            editModal.style.display = "flex";
+        };
+
+        // Close modal
+        cancelBtn.onclick = function () {
+            editModal.style.display = "none";
+        };
+
+        // Save updated profile
+        saveBtn.onclick = function () {
+            const updatedName = document.getElementById("editName").value;
+            const updatedEmail = document.getElementById("editEmail").value;
+            const updatedPhone = document.getElementById("editPhone").value;
+
+            fetch("http://localhost:3000/api/update-profile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: userId,
+                    name: updatedName,
+                    email: updatedEmail,
+                    phone: updatedPhone
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update local storage
+                        localStorage.setItem('user_name', updatedName);
+                        localStorage.setItem('user_email', updatedEmail);
+                        localStorage.setItem('user_phone', updatedPhone);
+
+                        // Update UI
+                        document.getElementById('profileName').innerText = updatedName;
+                        document.getElementById('menuEmail').innerText = "Email: " + updatedEmail;
+                        document.getElementById('menuPhone').innerText = "Phone: " + updatedPhone;
+
+                        alert("✅ Profile updated successfully!");
+                        editModal.style.display = "none";
+                    } else {
+                        alert("❌ " + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("❌ Failed to update profile.");
+                });
+        };
     </script>
 </body>
 

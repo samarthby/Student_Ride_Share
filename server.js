@@ -293,6 +293,27 @@ app.get('/api/ride-location', (req, res) => {
     );
 });
 
+
+// Update Profile endpoint
+app.put('/api/update-profile', (req, res) => {
+    const { user_id, name, email, phone } = req.body;
+
+    if (!user_id || !name || !email || !phone) {
+        return res.json({ success: false, message: 'All fields are required.' });
+    }
+
+    const sql = `UPDATE users SET name = ?, email = ?, phone = ? WHERE user_id = ?`;
+    db.query(sql, [name, email, phone, user_id], (err, result) => {
+        if (err) {
+            console.error('Error updating profile:', err);
+            return res.json({ success: false, message: 'Database error.' });
+        }
+        return res.json({ success: true, message: 'Profile updated successfully.' });
+    });
+});
+
+
+
 // Start the Server
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
