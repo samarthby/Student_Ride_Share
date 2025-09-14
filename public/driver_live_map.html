@@ -36,12 +36,11 @@
     <script>
         let map, currentMarker, routeLayer, endLatLng;
         let recenterOnUpdate = true;
-        let lastLatLng = null; // store previous location for bearing
 
         const urlParams = new URLSearchParams(window.location.search);
         const rideId = urlParams.get('ride_id');
 
-        // Calculate bearing (direction) between two points
+        // Bearing between two points
         function calculateBearing(lat1, lng1, lat2, lng2) {
             const toRad = deg => deg * Math.PI / 180;
             const toDeg = rad => rad * 180 / Math.PI;
@@ -54,8 +53,7 @@
             const x = Math.cos(lat1) * Math.sin(lat2) -
                 Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
             let brng = Math.atan2(y, x);
-            brng = toDeg(brng);
-            return (brng + 360) % 360; // normalize
+            return (toDeg(brng) + 360) % 360;
         }
 
         function drawRoute(currentLat, currentLng, destLat, destLng) {
@@ -64,9 +62,9 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.routes && data.routes.length > 0) {
-                        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                        const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
                         if (routeLayer) map.removeLayer(routeLayer);
-                        routeLayer = L.polyline(coords, { color: 'black' }).addTo(map);
+                        routeLayer = L.polyline(routeCoords, { color: 'black' }).addTo(map);
                     }
                 });
         }
@@ -76,11 +74,11 @@
             const lng = position.coords.longitude;
             const currentLatLng = [lat, lng];
 
-            let rotation = -45; // default arrow angle
-            if (lastLatLng) {
-                rotation = calculateBearing(lastLatLng[0], lastLatLng[1], lat, lng);
+            // Bearing directly towards destination (+90 to align arrow tip)
+            let rotation = -45;
+            if (endLatLng) {
+                rotation = (calculateBearing(lat, lng, endLatLng[0], endLatLng[1]) + 90) % 360;
             }
-            lastLatLng = currentLatLng; // update last point
 
             if (!currentMarker) {
                 currentMarker = L.marker(currentLatLng, {
