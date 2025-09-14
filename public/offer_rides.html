@@ -12,6 +12,8 @@
     <!-- Alternative CDN for Leaflet Routing Machine CSS -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         * {
             margin: 0;
@@ -74,16 +76,6 @@
             padding: 16px;
         }
 
-        form {
-            height: 38vh;
-            /* total form height ~38% of screen */
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            /* smaller spacing between rows */
-            overflow-y: hidden;
-            /* prevent scrolling, keep compact */
-        }
 
         .form-group {
             margin-bottom: 1px;
@@ -138,7 +130,7 @@
         }
 
         form {
-            height: 290px;
+            height: 320px;
             /* total form height ~38% of screen */
             display: flex;
             flex-direction: column;
@@ -150,7 +142,7 @@
         #map {
             height: 275px;
             width: 100%;
-            margin-top: 1px;
+            margin-top: 0px;
             border-radius: 8px;
             overflow: hidden;
         }
@@ -193,21 +185,29 @@
     <div id="offer-ride-page" class="page active">
         <div class="header">
             <h1>Offer a Ride</h1>
+
         </div>
 
         <div class="container">
             <form>
-                <div class="form-group">
-                    <div class="form-control">
-                        <div class="form-icon">📍</div>
-                        <input type="text" class="form-input" id="currentLocation" placeholder="Your current location"
-                            disabled>
-                        <button type="button" id="fetchLocation"
-                            style="margin-left: 10px; padding: 8px; border: none; background-color: #0066ff; color: white; border-radius: 5px; cursor: pointer;">
-                            Get Location
-                        </button>
+                <div class="form-row">
+                    <div class="form-group">
+                        <div class="form-control">
+                            <div class="form-icon">📍</div>
+
+                            <input type="text" class="form-input" id="currentLocation"
+                                placeholder="Your current location" disabled>
+
+                            <!-- Clickable crosshairs icon -->
+                            <div id="fetchLocation" class="form-icon"
+                                style="cursor: pointer; color:#0066ff; margin-left:10px;">
+                                <i class="fa-solid fa-location-crosshairs"></i>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
+
 
 
                 <div class="form-row">
@@ -262,7 +262,30 @@
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <!-- Vehicle type -->
+                    <div class="form-group">
+                        <div class="form-control">
+                            <div class="form-icon">🚘</div>
+                            <select class="form-input" id="vehicleType">
+                                <option value="" disabled selected>Select Vehicle</option>
+                                <option value="Car">Car</option>
+                                <option value="Bike">Bike</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle number -->
+                    <div class="form-group">
+                        <div class="form-control">
+                            <div class="form-icon">🔢</div>
+                            <input type="text" class="form-input" id="vehicleNumber" placeholder="Enter Vehicle Number">
+                        </div>
+                    </div>
+                </div>
+
                 <button type="button" class="submit-btn" id="postRide">Post Ride</button>
+
             </form>
 
             <div id="map"></div>
@@ -333,6 +356,7 @@
                     { enableHighAccuracy: true, maximumAge: 0 }
                 );
             });
+
 
             document.getElementById('postRide').addEventListener('click', function () {
                 const driverEmail = localStorage.getItem('user_email');
