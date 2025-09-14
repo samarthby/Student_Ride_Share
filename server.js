@@ -5,6 +5,7 @@ const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -77,6 +78,8 @@ app.post('/api/offer-ride', (req, res) => {
         });
     });
 });
+
+
 
 // API Endpoint to Search Rides by Destination Name
 app.get('/api/search-rides', (req, res) => {
@@ -255,6 +258,23 @@ app.get('/api/my-boarded-rides', (req, res) => {
         }
     );
 });
+
+
+// Geocoding proxy endpoint (fixes CORS/403 for Nominatim)
+app.get('/api/geocode', async (req, res) => {
+    const q = req.query.q;
+    if (!q) return res.status(400).json({ error: 'Missing query' });
+    try {
+        const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+            params: { format: 'json', q },
+            headers: { 'User-Agent': 'YourAppName/1.0 (your@email.com)' }
+        });
+        res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: 'Geocoding failed' });
+    }
+});
+
 
 // Save or update driver's current location for a ride
 app.post('/api/ride-location', (req, res) => {
