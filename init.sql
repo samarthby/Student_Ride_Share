@@ -36,17 +36,19 @@ CREATE TABLE IF NOT EXISTS rides (
 
 
 -- Ride History table (no change)
-CREATE TABLE IF NOT EXISTS ride_history (
-    history_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS history (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     ride_id INT NOT NULL,
+    driver_id INT NOT NULL,
     passenger_id INT NOT NULL,
-    boarding_lat DECIMAL(10,8) NOT NULL,
-    boarding_lng DECIMAL(11,8) NOT NULL,
-    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ride_id) REFERENCES rides(ride_id),
-    FOREIGN KEY (passenger_id) REFERENCES users(user_id)
+    boarding_point VARCHAR(255) NOT NULL,
+    dropping_point VARCHAR(255) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    date DATE NOT NULL,
+    time TIME NOT NULL,
+    vehicle_type VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 
 -- Ride Boarding Points table (newly added)
 CREATE TABLE IF NOT EXISTS ride_boarding_points (

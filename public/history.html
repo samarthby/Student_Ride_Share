@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ride History</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        body {
+            background: #f5f5f5;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 16px;
+        }
+
+        .history-block {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
+        }
+
+        .history-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .history-route {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .vehicle-type {
+            font-weight: 600;
+        }
+
+        .price {
+            color: #41b949;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="historyContainer">
+        <h2>Ride History</h2>
+        <!-- History blocks will be loaded here -->
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const userId = localStorage.getItem('user_id');
+            fetch(`http://localhost:3000/api/history?user_id=${userId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('historyContainer');
+                    data.forEach(h => {
+                        const div = document.createElement('div');
+                        div.className = 'history-block';
+                        div.innerHTML = `
+                            <div class="history-top">
+                                <div>📅 ${h.date}</div>
+                                <div>🕒 ${h.time}</div>
+                                <div class="price">₹${h.price}</div>
+                            </div>
+                            <div class="history-route">
+                                <span>From:</span> <span>${h.boarding_point}</span>
+                                <span>→</span>
+                                <span>To:</span> <span>${h.dropping_point}</span>
+                            </div>
+                            <div class="vehicle-type">Vehicle: ${h.vehicle_type}</div>
+                        `;
+                        container.appendChild(div);
+                    });
+                });
+        });
+    </script>
+</body>
+
+</html>

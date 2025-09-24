@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Income & Stats</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: #f5f5f5;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 16px;
+        }
+
+        canvas {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 32px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Income & Stats</h2>
+        <canvas id="incomeChart" height="120"></canvas>
+        <canvas id="vehicleChart" height="120"></canvas>
+        <canvas id="monthlyChart" height="120"></canvas>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const userId = localStorage.getItem('user_id');
+            fetch(`http://localhost:3000/api/income?user_id=${userId}`)
+                .then(res => res.json())
+                .then(data => {
+                    // Income by vehicle type
+                    new Chart(document.getElementById('vehicleChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.vehicleTypes.map(v => v.vehicle_type),
+                            datasets: [{ data: data.vehicleTypes.map(v => v.total), backgroundColor: ['#41b949', '#0066ff', '#ff9800'] }]
+                        },
+                        options: { plugins: { title: { display: true, text: 'Income by Vehicle Type' } } }
+                    });
+                    // Monthly income
+                    new Chart(document.getElementById('monthlyChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: data.months.map(m => m.month),
+                            datasets: [{ label: 'Income', data: data.months.map(m => m.total), backgroundColor: '#0066ff' }]
+                        },
+                        options: { plugins: { title: { display: true, text: 'Monthly Income' } } }
+                    });
+                    // Total income
+                    new Chart(document.getElementById('incomeChart'), {
+                        type: 'pie',
+                        data: {
+                            labels: ['Total Income'],
+                            datasets: [{ data: [data.totalIncome], backgroundColor: ['#41b949'] }]
+                        },
+                        options: { plugins: { title: { display: true, text: 'Total Income' } } }
+                    });
+                });
+        });
+    </script>
+</body>
+
+</html>

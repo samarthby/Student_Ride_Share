@@ -344,14 +344,85 @@ app.put('/api/update-profile', (req, res) => {
 // Delete ride endpoint
 app.delete('/api/ride/:ride_id', (req, res) => {
     const rideId = req.params.ride_id;
-    // Delete boarding points first (to avoid FK constraint errors)
-    db.query('DELETE FROM ride_boarding_points WHERE ride_id = ?', [rideId], (err) => {
-        if (err) return res.status(500).json({ message: 'Failed to delete boarding points.' });
-        db.query('DELETE FROM rides WHERE ride_id = ?', [rideId], (err2) => {
-            if (err2) return res.status(500).json({ message: 'Failed to delete ride.' });
-            res.json({ message: 'Ride deleted.' });
-        });
-    });
+    // Get all boarding points for this ride
+    db.query(
+        `SELECT bp.*, r.driver_id, r.vehicle_type, r.price_per_seat, r.date, r.time, r.source_name, r.destination_name
+         FROM ride_boarding_points bp
+         JOIN rides r ON bp.ride_id = r.ride_id
+         WHERE bp.ride_id = ?`,
+        [rideId],
+        (err, boardingPoints) => {
+            if (err) return res.status(500).json({ message: 'Failed to fetch boarding points.' });
+            // Insert history for each passenger
+            const values = boardingPoints.map(bp => [
+                bp.ride_id, bp.driver_id, bp.passenger_id,
+                bp.boarding_lat ? bp.boarding_lat : bp.source_name,
+                bp.boarding_lng ? bp.boarding_lng : bp.destination_name,
+                bp.price_per_seat, bp.date, bp.time, bp.vehicle_type
+            ]);
+            if (values.length) {
+                db.query(
+                    `INSERT INTO history (ride_id, driver_id, passenger_id, boarding_point, dropping_point, price, date, time, vehicle_type)
+                     VALUES ?`,
+                    [values],
+                    (err2) => {
+                        if (err2) return res.status(500).json({ message: 'Failed to store history.' });
+                        // Delete boarding points and ride
+                        db.query('DELETE FROM ride_boarding_points WHERE ride_id = ?', [rideId], () => {
+                            db.query('DELETE FROM rides WHERE ride_id = ?', [rideId], () => {
+                                res.json({ message: 'Ride completed and history stored.' });
+                            });
+                        });
+                    }
+                );
+            } else {
+                // No passengers, just delete ride
+                db.query('DELETE FROM rides WHERE ride_id = ?', [rideId], () => {
+                    res.json({ message: 'Ride deleted.' });
+                });
+            }
+        }
+    );
+});
+
+app.get('/api/history', (req, res) => {
+    const userId = req.query.user_id;
+    db.query(
+        `SELECT boarding_point, dropping_point, price, date, time, vehicle_type
+         FROM history WHERE driver_id = ? OR passenger_id = ? ORDER BY date DESC, time DESC`,
+        [userId, userId],
+        (err, results) => {
+            if (err) return res.json([]);
+            res.json(results);
+        }
+    );
+});
+
+app.get('/api/income', (req, res) => {
+    const userId = req.query.user_id;
+    db.query(
+        `SELECT SUM(price) AS totalIncome FROM history WHERE driver_id = ?`,
+        [userId],
+        (err, totalRows) => {
+            db.query(
+                `SELECT vehicle_type, SUM(price) AS total FROM history WHERE driver_id = ? GROUP BY vehicle_type`,
+                [userId],
+                (err2, vehicleRows) => {
+                    db.query(
+                        `SELECT DATE_FORMAT(date, '%Y-%m') AS month, SUM(price) AS total FROM history WHERE driver_id = ? GROUP BY month`,
+                        [userId],
+                        (err3, monthRows) => {
+                            res.json({
+                                totalIncome: totalRows[0]?.totalIncome || 0,
+                                vehicleTypes: vehicleRows,
+                                months: monthRows
+                            });
+                        }
+                    );
+                }
+            );
+        }
+    );
 });
 
 // Start the Server
