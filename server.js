@@ -421,6 +421,61 @@ app.get('/api/income', (req, res) => {
     );
 });
 
+app.get('/api/income-charts', (req, res) => {
+    const userId = req.query.user_id;
+    // Total Income
+    db.query(
+        `SELECT SUM(price) AS totalIncome FROM history WHERE driver_id = ?`,
+        [userId],
+        (err, totalRows) => {
+            // Income by Vehicle Type
+            db.query(
+                `SELECT vehicle_type, SUM(price) AS total FROM history WHERE driver_id = ? GROUP BY vehicle_type`,
+                [userId],
+                (err2, vehicleRows) => {
+                    // Monthly Income
+                    db.query(
+                        `SELECT DATE_FORMAT(date, '%Y-%m') AS month, SUM(price) AS total FROM history WHERE driver_id = ? GROUP BY month ORDER BY month DESC LIMIT 6`,
+                        [userId],
+                        (err3, monthRows) => {
+                            // Rides Per Day
+                            db.query(
+                                `SELECT date, COUNT(*) AS count FROM history WHERE driver_id = ? GROUP BY date ORDER BY date DESC LIMIT 7`,
+                                [userId],
+                                (err4, ridesPerDay) => {
+                                    // Rides Completed Per Month
+                                    db.query(
+                                        `SELECT DATE_FORMAT(date, '%Y-%m') AS month, COUNT(*) AS count FROM history WHERE driver_id = ? GROUP BY month ORDER BY month DESC LIMIT 6`,
+                                        [userId],
+                                        (err5, ridesPerMonth) => {
+                                            // Top Routes
+                                            db.query(
+                                                `SELECT CONCAT(source_name, ' → ', destination_name) AS route, COUNT(*) AS count
+                                                 FROM history WHERE driver_id = ? GROUP BY route ORDER BY count DESC LIMIT 5`,
+                                                [userId],
+                                                (err6, topRoutes) => {
+                                                    res.json({
+                                                        totalIncome: totalRows[0]?.totalIncome || 0,
+                                                        vehicleTypes: vehicleRows,
+                                                        months: monthRows,
+                                                        ridesPerDay,
+                                                        ridesPerMonth,
+                                                        topRoutes
+                                                    });
+                                                }
+                                            );
+                                        }
+                                    );
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
 // Start the Server
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);

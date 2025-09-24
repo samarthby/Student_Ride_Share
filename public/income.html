@@ -17,14 +17,14 @@
         .container {
             max-width: 480px;
             margin: 0 auto;
-            padding: 16px;
+            padding: 8px;
         }
 
         .header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 18px;
+            margin-bottom: 12px;
         }
 
         .back-btn {
@@ -32,49 +32,59 @@
             color: #fff;
             border: none;
             border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 16px;
+            padding: 7px 12px;
+            font-size: 15px;
             cursor: pointer;
             font-weight: 600;
+        }
+
+        .charts-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         .chart-block {
             background: white;
             border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 18px;
+            padding: 8px;
+            flex: 1 1 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            min-width: 0;
         }
 
         .chart-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             color: #444;
             text-align: center;
         }
 
         canvas {
-            max-width: 100%;
-            height: 180px !important;
+            width: 100% !important;
+            height: 120px !important;
         }
 
         @media (max-width: 600px) {
             .container {
-                padding: 8px;
+                padding: 4px;
+            }
+
+            .charts-row {
+                gap: 4px;
             }
 
             .chart-block {
-                padding: 8px;
+                padding: 4px;
             }
 
-            .back-btn {
-                padding: 7px 12px;
-                font-size: 15px;
+            .chart-title {
+                font-size: 13px;
             }
 
             canvas {
-                height: 140px !important;
+                height: 100px !important;
             }
         }
     </style>
@@ -86,26 +96,44 @@
             <button class="back-btn" onclick="window.history.back()">← Back</button>
             <h2 style="margin:0;">Income & Stats</h2>
         </div>
-        <div class="chart-block">
-            <div class="chart-title">Total Income</div>
-            <canvas id="incomeChart"></canvas>
+        <div class="charts-row">
+            <div class="chart-block">
+                <div class="chart-title">Total Income</div>
+                <canvas id="incomeChart"></canvas>
+            </div>
+            <div class="chart-block">
+                <div class="chart-title">Income by Vehicle Type</div>
+                <canvas id="vehicleChart"></canvas>
+            </div>
         </div>
-        <div class="chart-block">
-            <div class="chart-title">Income by Vehicle Type</div>
-            <canvas id="vehicleChart"></canvas>
+        <div class="charts-row">
+            <div class="chart-block">
+                <div class="chart-title">Monthly Income</div>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+            <div class="chart-block">
+                <div class="chart-title">Rides Per Day</div>
+                <canvas id="ridesPerDayChart"></canvas>
+            </div>
         </div>
-        <div class="chart-block">
-            <div class="chart-title">Monthly Income</div>
-            <canvas id="monthlyChart"></canvas>
+        <div class="charts-row">
+            <div class="chart-block">
+                <div class="chart-title">Rides Completed Per Month</div>
+                <canvas id="ridesPerMonthChart"></canvas>
+            </div>
+            <div class="chart-block">
+                <div class="chart-title">Top Routes</div>
+                <canvas id="topRoutesChart"></canvas>
+            </div>
         </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const userId = localStorage.getItem('user_id');
-            fetch(`http://localhost:3000/api/income?user_id=${userId}`)
+            fetch(`http://localhost:3000/api/income-charts?user_id=${userId}`)
                 .then(res => res.json())
                 .then(data => {
-                    // Total income
+                    // Total Income (doughnut)
                     new Chart(document.getElementById('incomeChart'), {
                         type: 'doughnut',
                         data: {
@@ -120,7 +148,7 @@
                             plugins: { legend: { display: false } }
                         }
                     });
-                    // Income by vehicle type
+                    // Income by Vehicle Type (pie)
                     new Chart(document.getElementById('vehicleChart'), {
                         type: 'pie',
                         data: {
@@ -134,7 +162,7 @@
                             plugins: { legend: { position: 'bottom' } }
                         }
                     });
-                    // Monthly income
+                    // Monthly Income (bar)
                     new Chart(document.getElementById('monthlyChart'), {
                         type: 'bar',
                         data: {
@@ -148,6 +176,61 @@
                         options: {
                             plugins: { legend: { display: false } },
                             scales: { x: { ticks: { font: { size: 12 } } }, y: { beginAtZero: true } }
+                        }
+                    });
+                    // Rides Per Day (line)
+                    new Chart(document.getElementById('ridesPerDayChart'), {
+                        type: 'line',
+                        data: {
+                            labels: data.ridesPerDay.map(r => r.date),
+                            datasets: [{
+                                label: 'Rides',
+                                data: data.ridesPerDay.map(r => r.count),
+                                borderColor: '#0066ff',
+                                backgroundColor: 'rgba(0,102,255,0.1)',
+                                fill: true,
+                                tension: 0.3
+                            }]
+                        },
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true } }
+                        }
+                    });
+                    // Rides Completed Per Month (line)
+                    new Chart(document.getElementById('ridesPerMonthChart'), {
+                        type: 'line',
+                        data: {
+                            labels: data.ridesPerMonth.map(m => m.month),
+                            datasets: [{
+                                label: 'Completed',
+                                data: data.ridesPerMonth.map(m => m.count),
+                                borderColor: '#41b949',
+                                backgroundColor: 'rgba(65,185,73,0.1)',
+                                fill: true,
+                                tension: 0.3
+                            }]
+                        },
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true } }
+                        }
+                    });
+                    // Top Routes (horizontal bar)
+                    new Chart(document.getElementById('topRoutesChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: data.topRoutes.map(r => r.route),
+                            datasets: [{
+                                label: 'Rides',
+                                data: data.topRoutes.map(r => r.count),
+                                backgroundColor: '#ff9800'
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            plugins: { legend: { display: false } },
+                            scales: { x: { beginAtZero: true } }
                         }
                     });
                 });
