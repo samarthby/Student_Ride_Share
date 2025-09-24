@@ -4,17 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Ride History</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <style>
         body {
             background: #f5f5f5;
             font-family: 'Inter', sans-serif;
+            margin: 0;
         }
 
         .container {
-            max-width: 600px;
-            margin: 40px auto;
+            max-width: 480px;
+            margin: 0 auto;
             padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .back-btn {
+            background: #0066ff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
         }
 
         .history-block {
@@ -29,6 +49,8 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
+            font-size: 15px;
+            color: #666;
         }
 
         .history-route {
@@ -36,25 +58,64 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 8px;
+            font-size: 16px;
         }
 
         .vehicle-type {
             font-weight: 600;
+            font-size: 15px;
+            color: #333;
         }
 
         .price {
             color: #41b949;
             font-weight: 700;
+            font-size: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 8px;
+            }
+
+            .history-block {
+                padding: 12px;
+            }
+
+            .back-btn {
+                padding: 7px 12px;
+                font-size: 15px;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="container" id="historyContainer">
-        <h2>Ride History</h2>
+        <div class="header">
+            <button class="back-btn" onclick="window.history.back()">← Back</button>
+            <h2 style="margin:0;">Ride History</h2>
+        </div>
         <!-- History blocks will be loaded here -->
     </div>
     <script>
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const d = new Date(dateString);
+            return d.toISOString().split('T')[0];
+        }
+
+        function formatTime(timeString) {
+            if (!timeString) return '-';
+            return timeString.slice(0, 5);
+        }
+
+        function getVehicleSymbol(type) {
+            if (type === 'Car') return '<img src="images/car.png" alt="Car" style="width:22px;height:22px;vertical-align:middle;">';
+            if (type === 'Bike') return '<img src="images/bike.webp" alt="Bike" style="width:22px;height:22px;vertical-align:middle;">';
+            return '';
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const userId = localStorage.getItem('user_id');
             fetch(`http://localhost:3000/api/history?user_id=${userId}`)
@@ -66,16 +127,16 @@
                         div.className = 'history-block';
                         div.innerHTML = `
                             <div class="history-top">
-                                <div>📅 ${h.date}</div>
-                                <div>🕒 ${h.time}</div>
+                                <div>📅 ${formatDate(h.date)}</div>
+                                <div>🕒 ${formatTime(h.time)}</div>
                                 <div class="price">₹${h.price}</div>
                             </div>
                             <div class="history-route">
-                                <span>From:</span> <span>${h.boarding_point}</span>
+                                <span><span class="dot start" style="background:green;width:12px;height:12px;border-radius:50%;display:inline-block;"></span> ${h.source_name}</span>
                                 <span>→</span>
-                                <span>To:</span> <span>${h.dropping_point}</span>
+                                <span><span class="dot end" style="background:red;width:12px;height:12px;border-radius:50%;display:inline-block;"></span> ${h.destination_name}</span>
                             </div>
-                            <div class="vehicle-type">Vehicle: ${h.vehicle_type}</div>
+                            <div class="vehicle-type">${getVehicleSymbol(h.vehicle_type)} ${h.vehicle_type}</div>
                         `;
                         container.appendChild(div);
                     });

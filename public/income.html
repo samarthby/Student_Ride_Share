@@ -4,33 +4,100 @@
 <head>
     <meta charset="UTF-8">
     <title>Income & Stats</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <style>
         body {
             background: #f5f5f5;
             font-family: 'Inter', sans-serif;
+            margin: 0;
         }
 
         .container {
-            max-width: 700px;
-            margin: 40px auto;
+            max-width: 480px;
+            margin: 0 auto;
             padding: 16px;
         }
 
-        canvas {
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .back-btn {
+            background: #0066ff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .chart-block {
             background: white;
             border-radius: 12px;
-            margin-bottom: 32px;
+            padding: 12px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #444;
+            text-align: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: 180px !important;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 8px;
+            }
+
+            .chart-block {
+                padding: 8px;
+            }
+
+            .back-btn {
+                padding: 7px 12px;
+                font-size: 15px;
+            }
+
+            canvas {
+                height: 140px !important;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h2>Income & Stats</h2>
-        <canvas id="incomeChart" height="120"></canvas>
-        <canvas id="vehicleChart" height="120"></canvas>
-        <canvas id="monthlyChart" height="120"></canvas>
+        <div class="header">
+            <button class="back-btn" onclick="window.history.back()">← Back</button>
+            <h2 style="margin:0;">Income & Stats</h2>
+        </div>
+        <div class="chart-block">
+            <div class="chart-title">Total Income</div>
+            <canvas id="incomeChart"></canvas>
+        </div>
+        <div class="chart-block">
+            <div class="chart-title">Income by Vehicle Type</div>
+            <canvas id="vehicleChart"></canvas>
+        </div>
+        <div class="chart-block">
+            <div class="chart-title">Monthly Income</div>
+            <canvas id="monthlyChart"></canvas>
+        </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -38,32 +105,50 @@
             fetch(`http://localhost:3000/api/income?user_id=${userId}`)
                 .then(res => res.json())
                 .then(data => {
-                    // Income by vehicle type
-                    new Chart(document.getElementById('vehicleChart'), {
+                    // Total income
+                    new Chart(document.getElementById('incomeChart'), {
                         type: 'doughnut',
                         data: {
-                            labels: data.vehicleTypes.map(v => v.vehicle_type),
-                            datasets: [{ data: data.vehicleTypes.map(v => v.total), backgroundColor: ['#41b949', '#0066ff', '#ff9800'] }]
+                            labels: ['Total Income'],
+                            datasets: [{
+                                data: [data.totalIncome],
+                                backgroundColor: ['#41b949'],
+                                borderWidth: 2
+                            }]
                         },
-                        options: { plugins: { title: { display: true, text: 'Income by Vehicle Type' } } }
+                        options: {
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                    // Income by vehicle type
+                    new Chart(document.getElementById('vehicleChart'), {
+                        type: 'pie',
+                        data: {
+                            labels: data.vehicleTypes.map(v => v.vehicle_type),
+                            datasets: [{
+                                data: data.vehicleTypes.map(v => v.total),
+                                backgroundColor: ['#41b949', '#0066ff', '#ff9800']
+                            }]
+                        },
+                        options: {
+                            plugins: { legend: { position: 'bottom' } }
+                        }
                     });
                     // Monthly income
                     new Chart(document.getElementById('monthlyChart'), {
                         type: 'bar',
                         data: {
                             labels: data.months.map(m => m.month),
-                            datasets: [{ label: 'Income', data: data.months.map(m => m.total), backgroundColor: '#0066ff' }]
+                            datasets: [{
+                                label: 'Income',
+                                data: data.months.map(m => m.total),
+                                backgroundColor: '#0066ff'
+                            }]
                         },
-                        options: { plugins: { title: { display: true, text: 'Monthly Income' } } }
-                    });
-                    // Total income
-                    new Chart(document.getElementById('incomeChart'), {
-                        type: 'pie',
-                        data: {
-                            labels: ['Total Income'],
-                            datasets: [{ data: [data.totalIncome], backgroundColor: ['#41b949'] }]
-                        },
-                        options: { plugins: { title: { display: true, text: 'Total Income' } } }
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: { x: { ticks: { font: { size: 12 } } }, y: { beginAtZero: true } }
+                        }
                     });
                 });
         });

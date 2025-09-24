@@ -344,7 +344,6 @@ app.put('/api/update-profile', (req, res) => {
 // Delete ride endpoint
 app.delete('/api/ride/:ride_id', (req, res) => {
     const rideId = req.params.ride_id;
-    // Get all boarding points for this ride
     db.query(
         `SELECT bp.*, r.driver_id, r.vehicle_type, r.price_per_seat, r.date, r.time, r.source_name, r.destination_name
          FROM ride_boarding_points bp
@@ -353,21 +352,19 @@ app.delete('/api/ride/:ride_id', (req, res) => {
         [rideId],
         (err, boardingPoints) => {
             if (err) return res.status(500).json({ message: 'Failed to fetch boarding points.' });
-            // Insert history for each passenger
+            // Use source_name and destination_name for history
             const values = boardingPoints.map(bp => [
                 bp.ride_id, bp.driver_id, bp.passenger_id,
-                bp.boarding_lat ? bp.boarding_lat : bp.source_name,
-                bp.boarding_lng ? bp.boarding_lng : bp.destination_name,
+                bp.source_name, bp.destination_name,
                 bp.price_per_seat, bp.date, bp.time, bp.vehicle_type
             ]);
             if (values.length) {
                 db.query(
-                    `INSERT INTO history (ride_id, driver_id, passenger_id, boarding_point, dropping_point, price, date, time, vehicle_type)
+                    `INSERT INTO history (ride_id, driver_id, passenger_id, source_name, destination_name, price, date, time, vehicle_type)
                      VALUES ?`,
                     [values],
                     (err2) => {
                         if (err2) return res.status(500).json({ message: 'Failed to store history.' });
-                        // Delete boarding points and ride
                         db.query('DELETE FROM ride_boarding_points WHERE ride_id = ?', [rideId], () => {
                             db.query('DELETE FROM rides WHERE ride_id = ?', [rideId], () => {
                                 res.json({ message: 'Ride completed and history stored.' });
@@ -376,7 +373,6 @@ app.delete('/api/ride/:ride_id', (req, res) => {
                     }
                 );
             } else {
-                // No passengers, just delete ride
                 db.query('DELETE FROM rides WHERE ride_id = ?', [rideId], () => {
                     res.json({ message: 'Ride deleted.' });
                 });
@@ -388,7 +384,7 @@ app.delete('/api/ride/:ride_id', (req, res) => {
 app.get('/api/history', (req, res) => {
     const userId = req.query.user_id;
     db.query(
-        `SELECT boarding_point, dropping_point, price, date, time, vehicle_type
+        `SELECT source_name, destination_name, price, date, time, vehicle_type
          FROM history WHERE driver_id = ? OR passenger_id = ? ORDER BY date DESC, time DESC`,
         [userId, userId],
         (err, results) => {

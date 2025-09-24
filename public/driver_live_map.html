@@ -27,10 +27,35 @@
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
+
+        /* Back Button */
+        .back-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: #f0f0f0;
+        }
     </style>
 </head>
 
 <body>
+    <!-- Back Button -->
+    <button class="back-btn" onclick="window.history.back()">←</button>
     <button id="recenterBtn">Recenter</button>
     <div id="map"></div>
     <script>
@@ -74,7 +99,6 @@
             const lng = position.coords.longitude;
             const currentLatLng = [lat, lng];
 
-            // Bearing directly towards destination (+90 to align arrow tip)
             let rotation = -45;
             if (endLatLng) {
                 rotation = (calculateBearing(lat, lng, endLatLng[0], endLatLng[1]) + 90) % 360;
@@ -103,7 +127,6 @@
                 map.setView(currentLatLng, 20);
             }
 
-            // Send driver's location to backend
             fetch('http://localhost:3000/api/ride-location', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -136,11 +159,15 @@
             fetch(`http://localhost:3000/api/ride-details?ride_id=${rideId}`)
                 .then(res => res.json())
                 .then(ride => {
-                    map = L.map('map');
+                    // Initialize map without default zoom
+                    map = L.map('map', { zoomControl: false });
                     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 19,
                         attribution: '© OpenStreetMap'
                     }).addTo(map);
+
+                    // Add zoom control to bottom-left
+                    L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
                     endLatLng = [ride.end_lat, ride.end_lng];
                     L.marker(endLatLng).addTo(map).bindPopup('Destination');
