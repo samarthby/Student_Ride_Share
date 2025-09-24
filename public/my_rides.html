@@ -215,17 +215,19 @@
     </div>
 
     <script>
-        // --- Format Date ---
         function formatDate(dateString) {
             if (!dateString) return '';
             const d = new Date(dateString);
-            return d.toISOString().split('T')[0]; // YYYY-MM-DD
+            return d.toISOString().split('T')[0];
         }
-
-        // --- Format Time ---
         function formatTime(timeString) {
             if (!timeString) return '';
-            return timeString.slice(0, 5); // HH:MM
+            return timeString.slice(0, 5);
+        }
+        function getVehicleImage(type) {
+            if (type === 'Car') return '<img src="images/car.png" alt="Car" class="vehicle-icon" style="width:60px;height:auto;margin-left:30px;">';
+            if (type === 'Bike') return '<img src="images/bike.webp" alt="Bike" class="vehicle-icon" style="width:60px;height:auto;margin-left:30px;">';
+            return '';
         }
 
         function loadMyRides() {
@@ -240,7 +242,6 @@
                 boardedSection.innerHTML = '';
                 return;
             }
-
             fetch(`http://localhost:3000/api/my-offered-rides?email=${encodeURIComponent(userEmail)}&t=${Date.now()}`)
                 .then(res => res.json())
                 .then(rides => {
@@ -252,23 +253,33 @@
                             const div = document.createElement('div');
                             div.className = 'ride-item';
                             div.onclick = () => window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
-
+                            const vehicleImg = getVehicleImage(ride.vehicle_type);
                             div.innerHTML = `
-                <div class="ride-top">
-                  <div>📅 ${formatDate(ride.date)}</div>
-                  <div>🕒 ${formatTime(ride.time)}</div>
-                  <div>₹ ${ride.price_per_seat || '-'}</div>
-                </div>
-                <div class="ride-route">
-                  <div class="route-point"><span class="dot start"></span> ${ride.source_name}</div>
-                  <div class="route-line"></div>
-                  <div class="route-point"><span class="dot end"></span> ${ride.destination_name}</div>
-                </div>
-                <button class="btn-start" data-rideid="${ride.ride_id}">Start Ride</button>
-              `;
+                            <div class="ride-top">
+                                <div>📅 ${formatDate(ride.date)}</div>
+                                <div>🕒 ${formatTime(ride.time)}</div>
+                                <div class="ride-price" style="background:#41b949;color:#fff;padding:4px 10px;border-radius:6px;">₹ ${ride.price_per_seat || '-'}</div>
+                            </div>
+
+                            <div class="ride-route" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+                                <!-- Left Column: Source and Destination -->
+                                <div class="route-left" style="display:flex; flex-direction:column; gap:6px;">
+                                    <div class="route-point"><span class="dot start"></span> ${ride.source_name}</div>
+                                    <div class="route-line"></div>
+                                    <div class="route-point"><span class="dot end"></span> ${ride.destination_name}</div>
+                                </div>
+
+
+                            </div>
+
+                            <div class="ride-top" style="margin-top:12px;">
+                                <div style="font-weight:600;">${vehicleImg || ''}</div>
+                                <div style="font-size:13px;color:#555;"><span style="font-weight:600;">${ride.vehicle_number || '-'}</span></div>
+                            </div>
+                            <button class="btn-start" data-rideid="${ride.ride_id}">Start Ride</button>
+                        `;
                             section.appendChild(div);
                         });
-
                         section.querySelectorAll('.btn-start').forEach(btn => {
                             btn.onclick = function (e) {
                                 e.stopPropagation();
@@ -295,19 +306,27 @@
                             const div = document.createElement('div');
                             div.className = 'ride-item';
                             div.onclick = () => window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
-
+                            const vehicleImg = getVehicleImage(ride.vehicle_type);
                             div.innerHTML = `
-                <div class="ride-top">
-                  <div>📅 ${formatDate(ride.date)}</div>
-                  <div>🕒 ${formatTime(ride.time)}</div>
-                  <div>₹ ${ride.price_per_seat || '-'}</div>
-                </div>
-                <div class="ride-route">
-                  <div class="route-point"><span class="dot start"></span> ${ride.source_name}</div>
-                  <div class="route-line"></div>
-                  <div class="route-point"><span class="dot end"></span> ${ride.destination_name}</div>
-                </div>
-              `;
+                            <div class="ride-top">
+                                <div>📅 ${formatDate(ride.date)}</div>
+                                <div>🕒 ${formatTime(ride.time)}</div>
+                                <div class="ride-price" style="background:#41b949;color:#fff;padding:4px 10px;border-radius:6px;">₹ ${ride.price_per_seat || '-'}</div>
+                            </div>
+                            <div class="ride-route" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+                                <div class="route-left" style="display:flex;flex-direction:column;">
+                                    <div class="route-point"><span class="dot start"></span> ${ride.source_name}</div>
+                                    <div class="route-line"></div>
+                                    <div class="route-point"><span class="dot end"></span> ${ride.destination_name}</div>
+                                </div>
+
+                            </div>
+                            <div class="ride-top" style="margin-top:12px;">
+                                <div style="font-weight:600;">${vehicleImg || ''}</div>
+                                <div style="font-size:13px;color:#555;"><span style="font-weight:600;">${ride.vehicle_number || '-'}</span></div>
+                                <div style="font-size:13px;color:#555;">Driver: <span style="font-weight:600;">${ride.driver_name || '-'}</span></div>
+                            </div>
+                        `;
                             boardedSection.appendChild(div);
                         });
                     }

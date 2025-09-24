@@ -48,6 +48,12 @@
     <button class="back-btn" onclick="window.history.back()">←</button>
 
     <div id="map"></div>
+    <button id="markCompletedBtn" style="background:#d32f2f;color:white;padding:10px 20px;border:none;
+           border-radius:8px;cursor:pointer;position:absolute;top:15px;left:50%;
+           transform:translateX(-50%);z-index:1000;">
+        Mark as Completed
+    </button>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const urlParams = new URLSearchParams(window.location.search);
@@ -167,6 +173,25 @@
                 console.error(err);
             });
         });
+
+        document.getElementById('markCompletedBtn').onclick = function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rideId = urlParams.get('ride_id');
+            if (!rideId) {
+                alert('No ride_id provided.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to mark this ride as completed?')) {
+                fetch(`http://localhost:3000/api/ride/${rideId}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert('Ride marked as completed and removed.');
+                        window.location.href = 'my_rides.html';
+                    })
+                    .catch(err => alert('Failed to mark ride as completed.'));
+            }
+        };
     </script>
 </body>
 

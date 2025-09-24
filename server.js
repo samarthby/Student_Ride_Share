@@ -255,10 +255,11 @@ app.get('/api/my-boarded-rides', (req, res) => {
     db.query(
         `SELECT r.ride_id, r.source_name, r.destination_name, r.date, r.time, r.route_polyline, 
                 r.start_lat, r.start_lng, r.end_lat, r.end_lng, 
-                r.price_per_seat,  -- <-- add this line
+                r.price_per_seat, r.vehicle_type, r.vehicle_number, u.name AS driver_name,
                 bp.boarding_lat, bp.boarding_lng
          FROM ride_boarding_points bp
          JOIN rides r ON bp.ride_id = r.ride_id
+         JOIN users u ON r.driver_id = u.user_id
          WHERE bp.passenger_id = ?`,
         [passenger_id],
         (err, results) => {
@@ -340,7 +341,18 @@ app.put('/api/update-profile', (req, res) => {
     });
 });
 
-
+// Delete ride endpoint
+app.delete('/api/ride/:ride_id', (req, res) => {
+    const rideId = req.params.ride_id;
+    // Delete boarding points first (to avoid FK constraint errors)
+    db.query('DELETE FROM ride_boarding_points WHERE ride_id = ?', [rideId], (err) => {
+        if (err) return res.status(500).json({ message: 'Failed to delete boarding points.' });
+        db.query('DELETE FROM rides WHERE ride_id = ?', [rideId], (err2) => {
+            if (err2) return res.status(500).json({ message: 'Failed to delete ride.' });
+            res.json({ message: 'Ride deleted.' });
+        });
+    });
+});
 
 // Start the Server
 app.listen(PORT, () => {
