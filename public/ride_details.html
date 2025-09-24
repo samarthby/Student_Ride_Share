@@ -7,9 +7,6 @@
     <title>Ride Details</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Add a red marker icon for the draggable marker -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x-red.png"
-        media="none" onload="if(media!='all')media='all'">
     <style>
         #map {
             height: 100vh;
@@ -30,45 +27,64 @@
             cursor: pointer;
             font-size: 16px;
         }
+
+        /* Back Button */
+        .back-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: #f0f0f0;
+        }
     </style>
 </head>
 
 <body>
+    <button class="back-btn" onclick="window.history.back()">←</button>
     <button class="confirm-button">Confirm Location</button>
     <div id="map"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Get ride_id from the URL
             const urlParams = new URLSearchParams(window.location.search);
             const rideId = urlParams.get('ride_id');
-            const passengerId = localStorage.getItem('user_id'); // <-- Make sure this is set
+            const passengerId = localStorage.getItem('user_id');
 
-            // Fetch ride details from the backend
             fetch(`http://localhost:3000/api/ride-details?ride_id=${rideId}`)
                 .then(response => response.json())
                 .then(data => {
-                    // Initialize the map with a tile layer
-                    const map = L.map('map');
+                    // Initialize the map (disable default zoom control)
+                    const map = L.map('map', { zoomControl: false });
+
+                    // Add zoom control bottom-left
+                    L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
                     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 19,
                         attribution: '© OpenStreetMap'
                     }).addTo(map);
 
-                    // Parse the route polyline
                     const polyline = JSON.parse(data.route_polyline);
-
-                    // Add the route polyline to the map
                     const routeLayer = L.polyline(polyline, { color: 'blue' }).addTo(map);
-
-                    // Fit the map to the route
                     map.fitBounds(routeLayer.getBounds());
 
-                    // Add markers for start and destination
                     L.marker([data.start_lat, data.start_lng]).addTo(map).bindPopup('Driver Location');
                     L.marker([data.end_lat, data.end_lng]).addTo(map).bindPopup('Destination');
 
-                    // Use a red marker icon for the draggable boarding marker
                     const redIcon = new L.Icon({
                         iconUrl: 'https://i.ibb.co/Fr712Gx/mrkr.png',
                         iconSize: [50, 55],
@@ -78,38 +94,32 @@
                         shadowSize: [41, 41]
                     });
 
-                    // Add a draggable marker for the passenger with the red icon
                     const boardingMarker = L.marker(polyline[0], { draggable: true, icon: redIcon }).addTo(map);
 
-                    // Function to calculate distance between two points (Haversine formula)
                     function calculateDistance(lat1, lng1, lat2, lng2) {
-                        const R = 6371e3; // Earth's radius in meters
-                        const toRadians = (degrees) => degrees * (Math.PI / 180);
+                        const R = 6371e3;
+                        const toRadians = (deg) => deg * (Math.PI / 180);
                         const dLat = toRadians(lat2 - lat1);
                         const dLng = toRadians(lng2 - lng1);
-                        const a =
-                            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                             Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
                             Math.sin(dLng / 2) * Math.sin(dLng / 2);
                         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                        return R * c; // Distance in meters
+                        return R * c;
                     }
 
-                    // Handle "Confirm Location" button click
                     document.querySelector('.confirm-button').addEventListener('click', function () {
                         const markerLatLng = boardingMarker.getLatLng();
                         const markerLat = markerLatLng.lat;
                         const markerLng = markerLatLng.lng;
 
-                        // Check if the marker's position is near the route polyline
                         const isNearRoute = polyline.some(([lat, lng]) => {
                             const distance = calculateDistance(markerLat, markerLng, lat, lng);
-                            return distance <= 50; // Allow up to 50 meters from the route
+                            return distance <= 50;
                         });
 
                         if (isNearRoute) {
                             alert('Boarding point confirmed!');
-                            // Send to backend
                             fetch('http://localhost:3000/api/boarding-point', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -121,10 +131,6 @@
                                 })
                             })
                                 .then(res => res.json())
-                                .then(data => {
-                                    // Optionally show a message or update UI
-                                    // alert(data.message); // Uncomment for debug
-                                })
                                 .catch(err => {
                                     alert('Failed to save boarding point.');
                                     console.error(err);
