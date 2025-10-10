@@ -9,22 +9,22 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <style>
         body {
-            background: #f5f5f5;
+            background: #f5f6fa;
             font-family: 'Inter', sans-serif;
             margin: 0;
         }
 
         .container {
-            max-width: 480px;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 8px;
+            padding: 16px;
         }
 
         .header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
         }
 
         .back-btn {
@@ -32,59 +32,100 @@
             color: #fff;
             border: none;
             border-radius: 8px;
-            padding: 7px 12px;
-            font-size: 15px;
+            padding: 7px 16px;
+            font-size: 16px;
             cursor: pointer;
             font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 102, 255, 0.08);
+            transition: background 0.2s, transform 0.2s;
         }
 
-        .charts-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
+        .back-btn:hover {
+            background: #0050cc;
+            transform: translateY(-2px);
         }
 
         .chart-block {
-            background: white;
-            border-radius: 12px;
-            padding: 8px;
-            flex: 1 1 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            min-width: 0;
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .chart-block:hover {
+            box-shadow: 0 8px 28px rgba(0, 102, 255, 0.15);
+            transform: translateY(-2px);
         }
 
         .chart-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: #444;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #2a2a2a;
             text-align: center;
         }
 
-        canvas {
-            width: 100% !important;
-            height: 120px !important;
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #555;
         }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .chart-block {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
+            transition: box-shadow 0.2s, transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* center the canvas horizontally */
+        }
+
+        canvas {
+            width: 60% !important;
+            height: 90% !important;
+            display: block;
+        }
+
 
         @media (max-width: 600px) {
             .container {
-                padding: 4px;
-            }
-
-            .charts-row {
-                gap: 4px;
+                padding: 8px;
             }
 
             .chart-block {
-                padding: 4px;
-            }
-
-            .chart-title {
-                font-size: 13px;
+                padding: 14px;
+                margin-bottom: 16px;
             }
 
             canvas {
-                height: 100px !important;
+                height: 130px !important;
+            }
+
+            .chart-title {
+                font-size: 15px;
             }
         }
     </style>
@@ -96,73 +137,118 @@
             <button class="back-btn" onclick="window.history.back()">← Back</button>
             <h2 style="margin:0;">Income & Stats</h2>
         </div>
-        <div class="charts-row">
-            <div class="chart-block">
-                <div class="chart-title">Total Income</div>
-                <canvas id="incomeChart"></canvas>
-            </div>
-            <div class="chart-block">
-                <div class="chart-title">Income by Vehicle Type</div>
-                <canvas id="vehicleChart"></canvas>
-            </div>
+        <div class="chart-block">
+            <div class="chart-title">Total Income</div>
+            <canvas id="incomeChart"></canvas>
+            <div class="chart-legend" id="incomeLegend"></div>
         </div>
-        <div class="charts-row">
-            <div class="chart-block">
-                <div class="chart-title">Monthly Income</div>
-                <canvas id="monthlyChart"></canvas>
-            </div>
-            <div class="chart-block">
-                <div class="chart-title">Rides Per Day</div>
-                <canvas id="ridesPerDayChart"></canvas>
-            </div>
+        <div class="chart-block">
+            <div class="chart-title">Income by Vehicle Type</div>
+            <canvas id="vehicleChart"></canvas>
+            <div class="chart-legend" id="vehicleLegend"></div>
         </div>
-        <div class="charts-row">
-            <div class="chart-block">
-                <div class="chart-title">Rides Completed Per Month</div>
-                <canvas id="ridesPerMonthChart"></canvas>
-            </div>
-            <div class="chart-block">
-                <div class="chart-title">Top Routes</div>
-                <canvas id="topRoutesChart"></canvas>
-            </div>
+        <div class="chart-block">
+            <div class="chart-title">Monthly Income</div>
+            <canvas id="monthlyChart"></canvas>
+            <div class="chart-legend" id="monthlyLegend"></div>
+        </div>
+        <div class="chart-block">
+            <div class="chart-title">Rides Per Day</div>
+            <canvas id="ridesPerDayChart"></canvas>
+            <div class="chart-legend" id="ridesPerDayLegend"></div>
+        </div>
+        <div class="chart-block">
+            <div class="chart-title">Rides Completed Per Month</div>
+            <canvas id="ridesPerMonthChart"></canvas>
+            <div class="chart-legend" id="ridesPerMonthLegend"></div>
+        </div>
+        <div class="chart-block">
+            <div class="chart-title">Top Routes</div>
+            <canvas id="topRoutesChart"></canvas>
+            <div class="chart-legend" id="topRoutesLegend"></div>
         </div>
     </div>
     <script>
+        // Helper to create custom legends
+        function createLegend(containerId, labels, colors) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            labels.forEach((label, i) => {
+                const div = document.createElement('div');
+                div.className = 'legend-item';
+                div.innerHTML = `<span class="legend-color" style="background:${colors[i]};"></span>${label}`;
+                container.appendChild(div);
+            });
+        }
+
+        // Helper to format ISO date to YYYY-MM-DD
+        function formatDate(isoDate) {
+            const d = new Date(isoDate);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const userId = localStorage.getItem('user_id');
             fetch(`http://localhost:3000/api/income-charts?user_id=${userId}`)
                 .then(res => res.json())
                 .then(data => {
                     // Total Income (doughnut)
+                    const incomeColors = ['#41b949'];
                     new Chart(document.getElementById('incomeChart'), {
                         type: 'doughnut',
                         data: {
                             labels: ['Total Income'],
                             datasets: [{
                                 data: [data.totalIncome],
-                                backgroundColor: ['#41b949'],
+                                backgroundColor: incomeColors,
                                 borderWidth: 2
                             }]
                         },
                         options: {
-                            plugins: { legend: { display: false } }
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `₹${ctx.parsed}`
+                                    }
+                                }
+                            },
+                            animation: { animateScale: true }
                         }
                     });
+                    createLegend('incomeLegend', ['Total Income'], incomeColors);
+
                     // Income by Vehicle Type (pie)
+                    const vehicleColors = ['#41b949', '#0066ff', '#ff9800', '#e91e63', '#9c27b0'];
                     new Chart(document.getElementById('vehicleChart'), {
                         type: 'pie',
                         data: {
                             labels: data.vehicleTypes.map(v => v.vehicle_type),
                             datasets: [{
                                 data: data.vehicleTypes.map(v => v.total),
-                                backgroundColor: ['#41b949', '#0066ff', '#ff9800']
+                                backgroundColor: vehicleColors
                             }]
                         },
                         options: {
-                            plugins: { legend: { position: 'bottom' } }
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `${ctx.label}: ₹${ctx.parsed}`
+                                    }
+                                }
+                            },
+                            animation: { animateScale: true }
                         }
                     });
+                    createLegend('vehicleLegend', data.vehicleTypes.map(v => v.vehicle_type), vehicleColors);
+
                     // Monthly Income (bar)
+                    const monthlyColor = ['#0066ff'];
                     new Chart(document.getElementById('monthlyChart'), {
                         type: 'bar',
                         data: {
@@ -170,34 +256,58 @@
                             datasets: [{
                                 label: 'Income',
                                 data: data.months.map(m => m.total),
-                                backgroundColor: '#0066ff'
+                                backgroundColor: monthlyColor
                             }]
                         },
                         options: {
-                            plugins: { legend: { display: false } },
-                            scales: { x: { ticks: { font: { size: 12 } } }, y: { beginAtZero: true } }
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `₹${ctx.parsed.y}`
+                                    }
+                                }
+                            },
+                            scales: { x: { ticks: { font: { size: 12 } } }, y: { beginAtZero: true } },
+                            animation: { duration: 900 }
                         }
                     });
+                    createLegend('monthlyLegend', data.months.map(m => m.month), Array(data.months.length).fill(monthlyColor[0]));
+
                     // Rides Per Day (line)
+                    const ridesPerDayColor = ['#0066ff'];
                     new Chart(document.getElementById('ridesPerDayChart'), {
                         type: 'line',
                         data: {
-                            labels: data.ridesPerDay.map(r => r.date),
+                            labels: data.ridesPerDay.map(r => formatDate(r.date)),
                             datasets: [{
                                 label: 'Rides',
                                 data: data.ridesPerDay.map(r => r.count),
-                                borderColor: '#0066ff',
-                                backgroundColor: 'rgba(0,102,255,0.1)',
+                                borderColor: ridesPerDayColor[0],
+                                backgroundColor: 'rgba(0,102,255,0.13)',
                                 fill: true,
-                                tension: 0.3
+                                tension: 0.3,
+                                pointRadius: 4,
+                                pointHoverRadius: 7
                             }]
                         },
                         options: {
-                            plugins: { legend: { display: false } },
-                            scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true } }
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `Rides: ${ctx.parsed.y}`
+                                    }
+                                }
+                            },
+                            scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true } },
+                            animation: { duration: 900 }
                         }
                     });
+                    createLegend('ridesPerDayLegend', data.ridesPerDay.map(r => formatDate(r.date)), Array(data.ridesPerDay.length).fill(ridesPerDayColor[0]));
+
                     // Rides Completed Per Month (line)
+                    const ridesPerMonthColor = ['#41b949'];
                     new Chart(document.getElementById('ridesPerMonthChart'), {
                         type: 'line',
                         data: {
@@ -205,18 +315,31 @@
                             datasets: [{
                                 label: 'Completed',
                                 data: data.ridesPerMonth.map(m => m.count),
-                                borderColor: '#41b949',
-                                backgroundColor: 'rgba(65,185,73,0.1)',
+                                borderColor: ridesPerMonthColor[0],
+                                backgroundColor: 'rgba(65,185,73,0.13)',
                                 fill: true,
-                                tension: 0.3
+                                tension: 0.3,
+                                pointRadius: 4,
+                                pointHoverRadius: 7
                             }]
                         },
                         options: {
-                            plugins: { legend: { display: false } },
-                            scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true } }
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `Rides: ${ctx.parsed.y}`
+                                    }
+                                }
+                            },
+                            scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true } },
+                            animation: { duration: 900 }
                         }
                     });
+                    createLegend('ridesPerMonthLegend', data.ridesPerMonth.map(m => m.month), Array(data.ridesPerMonth.length).fill(ridesPerMonthColor[0]));
+
                     // Top Routes (horizontal bar)
+                    const topRoutesColor = ['#ff9800'];
                     new Chart(document.getElementById('topRoutesChart'), {
                         type: 'bar',
                         data: {
@@ -224,15 +347,24 @@
                             datasets: [{
                                 label: 'Rides',
                                 data: data.topRoutes.map(r => r.count),
-                                backgroundColor: '#ff9800'
+                                backgroundColor: topRoutesColor[0]
                             }]
                         },
                         options: {
                             indexAxis: 'y',
-                            plugins: { legend: { display: false } },
-                            scales: { x: { beginAtZero: true } }
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `Rides: ${ctx.parsed.x}`
+                                    }
+                                }
+                            },
+                            scales: { x: { beginAtZero: true } },
+                            animation: { duration: 900 }
                         }
                     });
+                    createLegend('topRoutesLegend', data.topRoutes.map(r => r.route), Array(data.topRoutes.length).fill(topRoutesColor[0]));
                 });
         });
     </script>
