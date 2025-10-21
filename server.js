@@ -423,57 +423,92 @@ app.get('/api/income', (req, res) => {
 
 app.get('/api/income-charts', (req, res) => {
     const userId = req.query.user_id;
-    // Total Income
-    db.query(
-        `SELECT SUM(price) AS totalIncome FROM history WHERE driver_id = ?`,
-        [userId],
-        (err, totalRows) => {
-            // Income by Vehicle Type
+
+    Promise.all([
+        // Total Income
+        new Promise((resolve, reject) => {
             db.query(
-                `SELECT vehicle_type, SUM(price) AS total FROM history WHERE driver_id = ? GROUP BY vehicle_type`,
+                'SELECT COALESCE(SUM(price), 0) as totalIncome FROM history WHERE driver_id = ?',
                 [userId],
-                (err2, vehicleRows) => {
-                    // Monthly Income
-                    db.query(
-                        `SELECT DATE_FORMAT(date, '%Y-%m') AS month, SUM(price) AS total FROM history WHERE driver_id = ? GROUP BY month ORDER BY month DESC LIMIT 6`,
-                        [userId],
-                        (err3, monthRows) => {
-                            // Rides Per Day
-                            db.query(
-                                `SELECT date, COUNT(*) AS count FROM history WHERE driver_id = ? GROUP BY date ORDER BY date DESC LIMIT 7`,
-                                [userId],
-                                (err4, ridesPerDay) => {
-                                    // Rides Completed Per Month
-                                    db.query(
-                                        `SELECT DATE_FORMAT(date, '%Y-%m') AS month, COUNT(*) AS count FROM history WHERE driver_id = ? GROUP BY month ORDER BY month DESC LIMIT 6`,
-                                        [userId],
-                                        (err5, ridesPerMonth) => {
-                                            // Top Routes
-                                            db.query(
-                                                `SELECT CONCAT(source_name, ' → ', destination_name) AS route, COUNT(*) AS count
-                                                 FROM history WHERE driver_id = ? GROUP BY route ORDER BY count DESC LIMIT 5`,
-                                                [userId],
-                                                (err6, topRoutes) => {
-                                                    res.json({
-                                                        totalIncome: totalRows[0]?.totalIncome || 0,
-                                                        vehicleTypes: vehicleRows,
-                                                        months: monthRows,
-                                                        ridesPerDay,
-                                                        ridesPerMonth,
-                                                        topRoutes
-                                                    });
-                                                }
-                                            );
-                                        }
-                                    );
-                                }
-                            );
-                        }
-                    );
+                (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results[0]?.totalIncome || 0);
                 }
             );
-        }
-    );
+        }),
+
+        // Income by Vehicle Type
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT vehicle_type, COALESCE(SUM(price), 0) as total FROM history WHERE driver_id = ? GROUP BY vehicle_type',
+                [userId],
+                (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results || []);
+                }
+            );
+        }),
+
+        // Monthly Income
+        new Promise((resolve, reject) => {
+            db.query(
+                `SELECT DATE_FORMAT(date, '%Y-%m') as month, COALESCE(SUM(price), 0) as total 
+                 FROM history WHERE driver_id = ? 
+                 GROUP BY month ORDER BY month DESC LIMIT 6`,
+                [userId],
+                (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results || []);
+                }
+            );
+        }),
+
+        // Rides per Day with emissions
+        new Promise((resolve, reject) => {
+            db.query(
+                `SELECT 
+                    h.date, 
+                    COUNT(*) as count,
+                    SUM(CASE 
+                        WHEN h.vehicle_type LIKE '%car%' THEN 120  -- Car emissions per km
+                        ELSE 30  -- Bike emissions per km
+                    END * IFNULL(bp.passenger_count, 1) * 10) as emission_savings  -- Assuming 10km average distance
+                 FROM history h
+                 LEFT JOIN (
+                     SELECT ride_id, COUNT(*) as passenger_count 
+                     FROM ride_boarding_points 
+                     GROUP BY ride_id
+                 ) bp ON h.ride_id = bp.ride_id
+                 WHERE h.driver_id = ?
+                 GROUP BY h.date 
+                 ORDER BY h.date DESC 
+                 LIMIT 7`,
+                [userId],
+                (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results || []);
+                }
+            );
+        })
+    ])
+        .then(([totalIncome, vehicleTypes, months, ridesPerDay]) => {
+            res.json({
+                totalIncome,
+                vehicleTypes,
+                months,
+                ridesPerDay
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching income data:', error);
+            res.status(500).json({
+                error: 'Failed to fetch income data',
+                totalIncome: 0,
+                vehicleTypes: [],
+                months: [],
+                ridesPerDay: []
+            });
+        });
 });
 
 // Start the Server

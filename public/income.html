@@ -100,6 +100,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            height: 290px;
             /* center the canvas horizontally */
         }
 
@@ -121,7 +122,8 @@
             }
 
             canvas {
-                height: 130px !important;
+                height: 230px !important;
+                width: 80% !important;
             }
 
             .chart-title {
@@ -158,17 +160,18 @@
             <div class="chart-legend" id="ridesPerDayLegend"></div>
         </div>
         <div class="chart-block">
-            <div class="chart-title">Rides Completed Per Month</div>
-            <canvas id="ridesPerMonthChart"></canvas>
-            <div class="chart-legend" id="ridesPerMonthLegend"></div>
-        </div>
-        <div class="chart-block">
-            <div class="chart-title">Top Routes</div>
-            <canvas id="topRoutesChart"></canvas>
-            <div class="chart-legend" id="topRoutesLegend"></div>
+            <div class="chart-title">Carbon Emission Savings</div>
+            <canvas id="carbonChart"></canvas>
+            <div class="chart-legend" id="carbonLegend"></div>
         </div>
     </div>
     <script>
+        // Add these constants at the top of your script
+        const EMISSIONS = {
+            car: 120, // grams CO2 per km
+            bike: 30,  // grams CO2 per km
+        };
+
         // Helper to create custom legends
         function createLegend(containerId, labels, colors) {
             const container = document.getElementById(containerId);
@@ -191,11 +194,28 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
+        // Add this function before the DOMContentLoaded event
+        function calculateEmissionSavings(rides) {
+            return rides.reduce((total, ride) => {
+                const isCarRide = ride.vehicle_type.toLowerCase().includes('car');
+                const baseEmission = isCarRide ? EMISSIONS.car : EMISSIONS.bike;
+                const savedEmissions = baseEmission * ride.passengers * ride.distance;
+                return total + savedEmissions;
+            }, 0);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const userId = localStorage.getItem('user_id');
             fetch(`http://localhost:3000/api/income-charts?user_id=${userId}`)
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to fetch');
+                    return res.json();
+                })
                 .then(data => {
+                    if (!data || data.error) {
+                        throw new Error(data?.error || 'Invalid data received');
+                    }
+
                     // Total Income (doughnut)
                     const incomeColors = ['#41b949'];
                     new Chart(document.getElementById('incomeChart'), {
@@ -203,7 +223,7 @@
                         data: {
                             labels: ['Total Income'],
                             datasets: [{
-                                data: [data.totalIncome],
+                                data: [data.totalIncome || 0],
                                 backgroundColor: incomeColors,
                                 borderWidth: 2
                             }]
@@ -223,40 +243,38 @@
                     createLegend('incomeLegend', ['Total Income'], incomeColors);
 
                     // Income by Vehicle Type (pie)
-                    const vehicleColors = ['#41b949', '#0066ff', '#ff9800', '#e91e63', '#9c27b0'];
+                    const vehicleColors = ['#41b949', '#0066ff', '#ff9800'];
                     new Chart(document.getElementById('vehicleChart'), {
                         type: 'pie',
                         data: {
-                            labels: data.vehicleTypes.map(v => v.vehicle_type),
+                            labels: data.vehicleTypes.map(v => v.vehicle_type || 'Unknown'),
                             datasets: [{
-                                data: data.vehicleTypes.map(v => v.total),
+                                data: data.vehicleTypes.map(v => v.total || 0),
                                 backgroundColor: vehicleColors
                             }]
                         },
                         options: {
                             plugins: {
-                                legend: { display: false },
+                                legend: { display: false }, // Changed from true to false
                                 tooltip: {
                                     callbacks: {
                                         label: ctx => `${ctx.label}: ₹${ctx.parsed}`
                                     }
                                 }
-                            },
-                            animation: { animateScale: true }
+                            }
                         }
                     });
                     createLegend('vehicleLegend', data.vehicleTypes.map(v => v.vehicle_type), vehicleColors);
 
                     // Monthly Income (bar)
-                    const monthlyColor = ['#0066ff'];
                     new Chart(document.getElementById('monthlyChart'), {
                         type: 'bar',
                         data: {
                             labels: data.months.map(m => m.month),
                             datasets: [{
                                 label: 'Income',
-                                data: data.months.map(m => m.total),
-                                backgroundColor: monthlyColor
+                                data: data.months.map(m => m.total || 0),
+                                backgroundColor: '#0066ff'
                             }]
                         },
                         options: {
@@ -264,31 +282,32 @@
                                 legend: { display: false },
                                 tooltip: {
                                     callbacks: {
-                                        label: ctx => `₹${ctx.parsed.y}`
+                                        label: ctx => `₹${Math.round(ctx.parsed.y)}`
                                     }
                                 }
                             },
-                            scales: { x: { ticks: { font: { size: 12 } } }, y: { beginAtZero: true } },
-                            animation: { duration: 900 }
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { callback: value => `₹${Math.round(value)}` }
+                                }
+                            }
                         }
                     });
-                    createLegend('monthlyLegend', data.months.map(m => m.month), Array(data.months.length).fill(monthlyColor[0]));
+
 
                     // Rides Per Day (line)
-                    const ridesPerDayColor = ['#0066ff'];
                     new Chart(document.getElementById('ridesPerDayChart'), {
                         type: 'line',
                         data: {
                             labels: data.ridesPerDay.map(r => formatDate(r.date)),
                             datasets: [{
                                 label: 'Rides',
-                                data: data.ridesPerDay.map(r => r.count),
-                                borderColor: ridesPerDayColor[0],
+                                data: data.ridesPerDay.map(r => r.count || 0),
+                                borderColor: '#0066ff',
                                 backgroundColor: 'rgba(0,102,255,0.13)',
                                 fill: true,
-                                tension: 0.3,
-                                pointRadius: 4,
-                                pointHoverRadius: 7
+                                tension: 0.3
                             }]
                         },
                         options: {
@@ -296,31 +315,31 @@
                                 legend: { display: false },
                                 tooltip: {
                                     callbacks: {
-                                        label: ctx => `Rides: ${ctx.parsed.y}`
+                                        label: ctx => `${Math.round(ctx.parsed.y)} rides`
                                     }
                                 }
                             },
-                            scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true } },
-                            animation: { duration: 900 }
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { stepSize: 1 }
+                                }
+                            }
                         }
                     });
-                    createLegend('ridesPerDayLegend', data.ridesPerDay.map(r => formatDate(r.date)), Array(data.ridesPerDay.length).fill(ridesPerDayColor[0]));
 
-                    // Rides Completed Per Month (line)
-                    const ridesPerMonthColor = ['#41b949'];
-                    new Chart(document.getElementById('ridesPerMonthChart'), {
+                    // Carbon Emission Savings (bar)
+                    new Chart(document.getElementById('carbonChart'), {
                         type: 'line',
                         data: {
-                            labels: data.ridesPerMonth.map(m => m.month),
+                            labels: data.ridesPerDay.map(r => formatDate(r.date)),
                             datasets: [{
-                                label: 'Completed',
-                                data: data.ridesPerMonth.map(m => m.count),
-                                borderColor: ridesPerMonthColor[0],
+                                label: 'CO₂ Saved',
+                                data: data.ridesPerDay.map(r => Math.round(r.emission_savings || 0)),
+                                borderColor: '#41b949',
                                 backgroundColor: 'rgba(65,185,73,0.13)',
                                 fill: true,
-                                tension: 0.3,
-                                pointRadius: 4,
-                                pointHoverRadius: 7
+                                tension: 0.3
                             }]
                         },
                         options: {
@@ -328,43 +347,30 @@
                                 legend: { display: false },
                                 tooltip: {
                                     callbacks: {
-                                        label: ctx => `Rides: ${ctx.parsed.y}`
+                                        label: ctx => `${Math.round(ctx.parsed.y)}g CO₂ saved`
                                     }
                                 }
                             },
-                            scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true } },
-                            animation: { duration: 900 }
-                        }
-                    });
-                    createLegend('ridesPerMonthLegend', data.ridesPerMonth.map(m => m.month), Array(data.ridesPerMonth.length).fill(ridesPerMonthColor[0]));
-
-                    // Top Routes (horizontal bar)
-                    const topRoutesColor = ['#ff9800'];
-                    new Chart(document.getElementById('topRoutesChart'), {
-                        type: 'bar',
-                        data: {
-                            labels: data.topRoutes.map(r => r.route),
-                            datasets: [{
-                                label: 'Rides',
-                                data: data.topRoutes.map(r => r.count),
-                                backgroundColor: topRoutesColor[0]
-                            }]
-                        },
-                        options: {
-                            indexAxis: 'y',
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: ctx => `Rides: ${ctx.parsed.x}`
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: value => `${Math.round(value)}g`
                                     }
                                 }
-                            },
-                            scales: { x: { beginAtZero: true } },
-                            animation: { duration: 900 }
+                            }
                         }
                     });
-                    createLegend('topRoutesLegend', data.topRoutes.map(r => r.route), Array(data.topRoutes.length).fill(topRoutesColor[0]));
+                    createLegend('carbonLegend', ['CO2 Savings'], ['#41b949']);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.querySelectorAll('.chart-block').forEach(block => {
+                        block.innerHTML = `<p class="error" style="color: #d32f2f; text-align: center; padding: 20px;">
+                            Failed to load chart data<br>
+                            <small style="opacity:0.7">${error.message}</small>
+                        </p>`;
+                    });
                 });
         });
     </script>
