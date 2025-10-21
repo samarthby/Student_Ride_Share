@@ -234,14 +234,14 @@
                     <div class="form-group">
                         <div class="form-control">
                             <div class="form-icon">📅</div>
-                            <input type="text" class="form-input" placeholder="Date (YYYY-MM-DD)">
+                            <input type="date" id="date" class="form-input" />
                         </div>
                     </div>
 
                     <div class="form-group">
                         <div class="form-control">
                             <div class="form-icon">🕒</div>
-                            <input type="text" class="form-input" placeholder="Time (HH:MM AM/PM)">
+                            <input type="text" class="form-input" placeholder="Time (HH:MM AM/PM)" id="time">
                         </div>
                     </div>
                 </div>
@@ -363,8 +363,8 @@
                 const driverId = localStorage.getItem('user_id');
                 const sourceValue = document.getElementById('source').value;
                 const destinationValue = document.getElementById('destination').value;
-                const dateValue = document.querySelector('input[placeholder="Date (YYYY-MM-DD)"]').value;
-                const timeValue = document.querySelector('input[placeholder="Time (HH:MM AM/PM)"]').value;
+                const dateValue = document.getElementById('date').value;
+                const timeValue = document.getElementById('time').value;
                 const seatsValue = document.querySelector('input[placeholder="Available seats"]').value;
                 const priceValue = document.querySelector('input[placeholder="Price per seat"]').value;
                 const vehicleType = document.getElementById('vehicleType').value;
@@ -473,6 +473,10 @@
                     })
                     .catch(err => console.error('Geocoding error:', err));
             });
+
+            // set minimum selectable date to today
+            const dateInput = document.getElementById('date');
+            if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
         });
     </script>
 </body>
