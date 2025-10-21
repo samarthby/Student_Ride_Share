@@ -52,6 +52,10 @@
             margin-bottom: 20px;
             box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
             transition: box-shadow 0.2s, transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 290px;
         }
 
         .chart-block:hover {
@@ -90,26 +94,11 @@
             display: inline-block;
         }
 
-        .chart-block {
-            background: #fff;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
-            transition: box-shadow 0.2s, transform 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 290px;
-            /* center the canvas horizontally */
-        }
-
         canvas {
             width: 60% !important;
             height: 90% !important;
             display: block;
         }
-
 
         @media (max-width: 600px) {
             .container {
@@ -152,7 +141,6 @@
         <div class="chart-block">
             <div class="chart-title">Monthly Income</div>
             <canvas id="monthlyChart"></canvas>
-            <div class="chart-legend" id="monthlyLegend"></div>
         </div>
         <div class="chart-block">
             <div class="chart-title">Rides Per Day</div>
@@ -165,11 +153,12 @@
             <div class="chart-legend" id="carbonLegend"></div>
         </div>
     </div>
+
     <script>
-        // Add these constants at the top of your script
+        // EMISSION CONSTANTS
         const EMISSIONS = {
             car: 120, // grams CO2 per km
-            bike: 30,  // grams CO2 per km
+            bike: 30  // grams CO2 per km
         };
 
         // Helper to create custom legends
@@ -194,14 +183,12 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // Add this function before the DOMContentLoaded event
-        function calculateEmissionSavings(rides) {
-            return rides.reduce((total, ride) => {
-                const isCarRide = ride.vehicle_type.toLowerCase().includes('car');
-                const baseEmission = isCarRide ? EMISSIONS.car : EMISSIONS.bike;
-                const savedEmissions = baseEmission * ride.passengers * ride.distance;
-                return total + savedEmissions;
-            }, 0);
+        // Small format helpers
+        function formatCurrency(n) {
+            return '₹' + (Math.round(n) || 0).toLocaleString();
+        }
+        function formatGrams(n) {
+            return `${Math.round(n || 0)} g`;
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -216,88 +203,120 @@
                         throw new Error(data?.error || 'Invalid data received');
                     }
 
-                    // Total Income (doughnut)
+                    // Shared interactive options
+                    const sharedInteractive = {
+                        interaction: { mode: 'index', intersect: false },
+                        hover: { mode: 'nearest', intersect: true },
+                        plugins: {
+                            tooltip: {
+                                enabled: true,
+                                mode: 'nearest',
+                                callbacks: {
+                                    title: items => {
+                                        if (!items || !items.length) return '';
+                                        return items[0].label ?? '';
+                                    },
+                                    label: ctx => {
+                                        const label = ctx.dataset.label || ctx.dataset.name || '';
+                                        const val = (ctx.parsed && (typeof ctx.parsed === 'object')) ? (ctx.parsed.y ?? ctx.parsed) : ctx.parsed;
+                                        if (label && label.toLowerCase().includes('income')) return `${label}: ${formatCurrency(val)}`;
+                                        if (label && label.toLowerCase().includes('rides')) return `${label}: ${Math.round(val)} rides`;
+                                        return label ? `${label}: ${val}` : `${val}`;
+                                    }
+                                }
+                            }
+                        },
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        animation: { duration: 450 }
+                    };
+
+                    // --- Total Income ---
                     const incomeColors = ['#41b949'];
-                    new Chart(document.getElementById('incomeChart'), {
+                    const incomeCanvas = document.getElementById('incomeChart');
+                    const incomeChart = new Chart(incomeCanvas, {
                         type: 'doughnut',
                         data: {
                             labels: ['Total Income'],
                             datasets: [{
+                                label: 'Income',
                                 data: [data.totalIncome || 0],
                                 backgroundColor: incomeColors,
-                                borderWidth: 2
+                                borderWidth: 2,
+                                hoverOffset: 8
                             }]
                         },
                         options: {
+                            ...sharedInteractive,
                             plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: ctx => `₹${ctx.parsed}`
-                                    }
-                                }
-                            },
-                            animation: { animateScale: true }
+                                ...sharedInteractive.plugins,
+                                tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: () => 'Total Income', label: ctx => formatCurrency(ctx.parsed) } },
+                                legend: { display: false }
+                            }
                         }
                     });
+                    incomeCanvas.onmousemove = e => {
+                        const el = incomeChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                        incomeCanvas.style.cursor = el.length ? 'pointer' : 'default';
+                    };
                     createLegend('incomeLegend', ['Total Income'], incomeColors);
 
-                    // Income by Vehicle Type (pie)
+                    // --- Income by Vehicle Type ---
                     const vehicleColors = ['#41b949', '#0066ff', '#ff9800'];
-                    new Chart(document.getElementById('vehicleChart'), {
+                    const vehicleCanvas = document.getElementById('vehicleChart');
+                    const vehicleChart = new Chart(vehicleCanvas, {
                         type: 'pie',
                         data: {
                             labels: data.vehicleTypes.map(v => v.vehicle_type || 'Unknown'),
                             datasets: [{
+                                label: 'Income by Vehicle',
                                 data: data.vehicleTypes.map(v => v.total || 0),
-                                backgroundColor: vehicleColors
+                                backgroundColor: vehicleColors,
+                                hoverOffset: 6
                             }]
                         },
                         options: {
+                            ...sharedInteractive,
                             plugins: {
-                                legend: { display: false }, // Changed from true to false
-                                tooltip: {
-                                    callbacks: {
-                                        label: ctx => `${ctx.label}: ₹${ctx.parsed}`
-                                    }
-                                }
+                                ...sharedInteractive.plugins,
+                                tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: i => i[0]?.label ?? '', label: c => `${c.label}: ${formatCurrency(c.parsed)}` } },
+                                legend: { display: false }
                             }
                         }
                     });
-                    createLegend('vehicleLegend', data.vehicleTypes.map(v => v.vehicle_type), vehicleColors);
+                    vehicleCanvas.onmousemove = e => {
+                        const el = vehicleChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                        vehicleCanvas.style.cursor = el.length ? 'pointer' : 'default';
+                    };
+                    createLegend('vehicleLegend', data.vehicleTypes.map(v => v.vehicle_type || 'Unknown'), vehicleColors);
 
-                    // Monthly Income (bar)
-                    new Chart(document.getElementById('monthlyChart'), {
+                    // --- Monthly Income ---
+                    const monthlyCanvas = document.getElementById('monthlyChart');
+                    const monthlyChart = new Chart(monthlyCanvas, {
                         type: 'bar',
                         data: {
                             labels: data.months.map(m => m.month),
-                            datasets: [{
-                                label: 'Income',
-                                data: data.months.map(m => m.total || 0),
-                                backgroundColor: '#0066ff'
-                            }]
+                            datasets: [{ label: 'Income', data: data.months.map(m => m.total || 0), backgroundColor: '#0066ff', borderRadius: 6 }]
                         },
                         options: {
+                            ...sharedInteractive,
                             plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: ctx => `₹${Math.round(ctx.parsed.y)}`
-                                    }
-                                }
+                                ...sharedInteractive.plugins,
+                                tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: i => i[0]?.label ?? '', label: c => `Income: ${formatCurrency(c.parsed.y ?? c.parsed)}` } },
+                                legend: { display: false }
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: { callback: value => `₹${Math.round(value)}` }
-                                }
-                            }
+                            scales: { x: { ticks: { font: { size: 12 } } }, y: { beginAtZero: true, ticks: { callback: v => `₹${Math.round(v)}` } } }
                         }
                     });
+                    monthlyCanvas.onmousemove = e => {
+                        const el = monthlyChart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, false);
+                        monthlyCanvas.style.cursor = el.length ? 'pointer' : 'default';
+                    };
+                    createLegend('monthlyLegend', data.months.map(m => m.month), Array(data.months.length).fill('#0066ff'));
 
-
-                    // Rides Per Day (line)
-                    new Chart(document.getElementById('ridesPerDayChart'), {
+                    // --- Rides Per Day ---
+                    const ridesPerDayCanvas = document.getElementById('ridesPerDayChart');
+                    const ridesPerDayChart = new Chart(ridesPerDayCanvas, {
                         type: 'line',
                         data: {
                             labels: data.ridesPerDay.map(r => formatDate(r.date)),
@@ -306,62 +325,72 @@
                                 data: data.ridesPerDay.map(r => r.count || 0),
                                 borderColor: '#0066ff',
                                 backgroundColor: 'rgba(0,102,255,0.13)',
+                                pointRadius: 4,
+                                pointHoverRadius: 8,
                                 fill: true,
                                 tension: 0.3
                             }]
                         },
                         options: {
+                            ...sharedInteractive,
                             plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: ctx => `${Math.round(ctx.parsed.y)} rides`
-                                    }
-                                }
+                                ...sharedInteractive.plugins,
+                                tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: i => i[0]?.label ?? '', label: c => `Rides: ${Math.round(c.parsed.y ?? c.parsed)}` } },
+                                legend: { display: false }
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: { stepSize: 1 }
-                                }
-                            }
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
                         }
+                    });
+                    ridesPerDayCanvas.onmousemove = e => {
+                        const el = ridesPerDayChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                        ridesPerDayCanvas.style.cursor = el.length ? 'pointer' : 'default';
+                    };
+
+                    // --- Carbon Emission Savings (NEW) ---
+                    const dates = (data.ridesPerDay || []).map(r => formatDate(r.date));
+                    const emissionsArr = (data.ridesPerDay || []).map(day => {
+                        if (typeof day.emission_savings !== 'undefined') return Math.round(day.emission_savings || 0);
+                        const count = day.count || 0;
+                        const assumeCar = (data.vehicleTypes || []).length ? (data.vehicleTypes[0].vehicle_type || '').toLowerCase().includes('car') : true;
+                        const perRide = (assumeCar ? EMISSIONS.car : EMISSIONS.bike) * 1 * 10;
+                        return Math.round(count * perRide);
                     });
 
-                    // Carbon Emission Savings (bar)
-                    new Chart(document.getElementById('carbonChart'), {
+                    const carbonCanvas = document.getElementById('carbonChart');
+                    const carbonChart = new Chart(carbonCanvas, {
                         type: 'line',
                         data: {
-                            labels: data.ridesPerDay.map(r => formatDate(r.date)),
+                            labels: dates,
                             datasets: [{
                                 label: 'CO₂ Saved',
-                                data: data.ridesPerDay.map(r => Math.round(r.emission_savings || 0)),
+                                data: emissionsArr,
                                 borderColor: '#41b949',
-                                backgroundColor: 'rgba(65,185,73,0.13)',
+                                backgroundColor: 'rgba(65,185,73,0.12)',
+                                pointRadius: 4,
+                                pointHoverRadius: 8,
                                 fill: true,
-                                tension: 0.3
+                                tension: 0.25
                             }]
                         },
                         options: {
+                            ...sharedInteractive,
                             plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: ctx => `${Math.round(ctx.parsed.y)}g CO₂ saved`
-                                    }
-                                }
+                                ...sharedInteractive.plugins,
+                                tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: i => i[0]?.label ?? '', label: c => `Saved: ${formatGrams(c.parsed.y ?? c.parsed)}` } },
+                                legend: { display: false }
                             },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: value => `${Math.round(value)}g`
-                                    }
-                                }
+                                x: { ticks: { stepSize: 1, callback: v => v } },
+                                y: { beginAtZero: true, ticks: { callback: v => `${Math.round(v)}g` } }
                             }
                         }
                     });
-                    createLegend('carbonLegend', ['CO2 Savings'], ['#41b949']);
+                    carbonCanvas.onmousemove = e => {
+                        const el = carbonChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                        carbonCanvas.style.cursor = el.length ? 'pointer' : 'default';
+                    };
+                    createLegend('carbonLegend', ['CO₂ Saved'], ['#41b949']);
+
                 })
                 .catch(error => {
                     console.error('Error:', error);
