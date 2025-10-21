@@ -141,12 +141,21 @@
         <div class="chart-block">
             <div class="chart-title">Monthly Income</div>
             <canvas id="monthlyChart"></canvas>
+            <div class="chart-legend" id="monthlyLegend"></div>
         </div>
         <div class="chart-block">
             <div class="chart-title">Rides Per Day</div>
             <canvas id="ridesPerDayChart"></canvas>
             <div class="chart-legend" id="ridesPerDayLegend"></div>
         </div>
+
+        <!-- New histogram chart for total distance per day -->
+        <div class="chart-block">
+            <div class="chart-title">Total Distance Covered Per Day (km)</div>
+            <canvas id="distanceChart"></canvas>
+            <div class="chart-legend" id="distanceLegend"></div>
+        </div>
+
         <div class="chart-block">
             <div class="chart-title">Carbon Emission Savings</div>
             <canvas id="carbonChart"></canvas>
@@ -160,6 +169,9 @@
             car: 120, // grams CO2 per km
             bike: 30  // grams CO2 per km
         };
+
+        // average distance per ride fallback (km)
+        const AVERAGE_DISTANCE_KM = 10;
 
         // Helper to create custom legends
         function createLegend(containerId, labels, colors) {
@@ -189,6 +201,9 @@
         }
         function formatGrams(n) {
             return `${Math.round(n || 0)} g`;
+        }
+        function formatKm(n) {
+            return `${Math.round(n || 0)} km`;
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -221,6 +236,8 @@
                                         const val = (ctx.parsed && (typeof ctx.parsed === 'object')) ? (ctx.parsed.y ?? ctx.parsed) : ctx.parsed;
                                         if (label && label.toLowerCase().includes('income')) return `${label}: ${formatCurrency(val)}`;
                                         if (label && label.toLowerCase().includes('rides')) return `${label}: ${Math.round(val)} rides`;
+                                        if (label && label.toLowerCase().includes('km')) return `${label}: ${formatKm(val)}`;
+                                        if (label && label.toLowerCase().includes('co₂') || label.toLowerCase().includes('co2') || label.toLowerCase().includes('saved')) return `${label}: ${formatGrams(val)}`;
                                         return label ? `${label}: ${val}` : `${val}`;
                                     }
                                 }
@@ -262,15 +279,15 @@
                     createLegend('incomeLegend', ['Total Income'], incomeColors);
 
                     // --- Income by Vehicle Type ---
-                    const vehicleColors = ['#41b949', '#0066ff', '#ff9800'];
+                    const vehicleColors = ['#41b949', '#0066ff', '#ff9800', '#9c27b0', '#e91e63'];
                     const vehicleCanvas = document.getElementById('vehicleChart');
                     const vehicleChart = new Chart(vehicleCanvas, {
                         type: 'pie',
                         data: {
-                            labels: data.vehicleTypes.map(v => v.vehicle_type || 'Unknown'),
+                            labels: (data.vehicleTypes || []).map(v => v.vehicle_type || 'Unknown'),
                             datasets: [{
                                 label: 'Income by Vehicle',
-                                data: data.vehicleTypes.map(v => v.total || 0),
+                                data: (data.vehicleTypes || []).map(v => v.total || 0),
                                 backgroundColor: vehicleColors,
                                 hoverOffset: 6
                             }]
@@ -280,7 +297,7 @@
                             plugins: {
                                 ...sharedInteractive.plugins,
                                 tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: i => i[0]?.label ?? '', label: c => `${c.label}: ${formatCurrency(c.parsed)}` } },
-                                legend: { display: false }
+                                legend: { display: false } // custom legend used
                             }
                         }
                     });
@@ -288,15 +305,15 @@
                         const el = vehicleChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
                         vehicleCanvas.style.cursor = el.length ? 'pointer' : 'default';
                     };
-                    createLegend('vehicleLegend', data.vehicleTypes.map(v => v.vehicle_type || 'Unknown'), vehicleColors);
+                    createLegend('vehicleLegend', (data.vehicleTypes || []).map(v => v.vehicle_type || 'Unknown'), vehicleColors);
 
                     // --- Monthly Income ---
                     const monthlyCanvas = document.getElementById('monthlyChart');
                     const monthlyChart = new Chart(monthlyCanvas, {
                         type: 'bar',
                         data: {
-                            labels: data.months.map(m => m.month),
-                            datasets: [{ label: 'Income', data: data.months.map(m => m.total || 0), backgroundColor: '#0066ff', borderRadius: 6 }]
+                            labels: (data.months || []).map(m => m.month),
+                            datasets: [{ label: 'Income', data: (data.months || []).map(m => m.total || 0), backgroundColor: '#0066ff', borderRadius: 6 }]
                         },
                         options: {
                             ...sharedInteractive,
@@ -305,24 +322,24 @@
                                 tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: i => i[0]?.label ?? '', label: c => `Income: ${formatCurrency(c.parsed.y ?? c.parsed)}` } },
                                 legend: { display: false }
                             },
-                            scales: { x: { ticks: { font: { size: 12 } } }, y: { beginAtZero: true, ticks: { callback: v => `₹${Math.round(v)}` } } }
+                            scales: { x: { type: 'category', ticks: { font: { size: 12 } } }, y: { beginAtZero: true, ticks: { callback: v => `₹${Math.round(v)}` } } }
                         }
                     });
                     monthlyCanvas.onmousemove = e => {
                         const el = monthlyChart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, false);
                         monthlyCanvas.style.cursor = el.length ? 'pointer' : 'default';
                     };
-                    createLegend('monthlyLegend', data.months.map(m => m.month), Array(data.months.length).fill('#0066ff'));
+                    createLegend('monthlyLegend', (data.months || []).map(m => m.month), Array((data.months || []).length).fill('#0066ff'));
 
                     // --- Rides Per Day ---
                     const ridesPerDayCanvas = document.getElementById('ridesPerDayChart');
                     const ridesPerDayChart = new Chart(ridesPerDayCanvas, {
                         type: 'line',
                         data: {
-                            labels: data.ridesPerDay.map(r => formatDate(r.date)),
+                            labels: (data.ridesPerDay || []).map(r => formatDate(r.date)),
                             datasets: [{
                                 label: 'Rides',
-                                data: data.ridesPerDay.map(r => r.count || 0),
+                                data: (data.ridesPerDay || []).map(r => r.count || 0),
                                 borderColor: '#0066ff',
                                 backgroundColor: 'rgba(0,102,255,0.13)',
                                 pointRadius: 4,
@@ -338,7 +355,7 @@
                                 tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: i => i[0]?.label ?? '', label: c => `Rides: ${Math.round(c.parsed.y ?? c.parsed)}` } },
                                 legend: { display: false }
                             },
-                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                            scales: { x: { type: 'category' }, y: { beginAtZero: true, ticks: { stepSize: 1 } } }
                         }
                     });
                     ridesPerDayCanvas.onmousemove = e => {
@@ -346,14 +363,83 @@
                         ridesPerDayCanvas.style.cursor = el.length ? 'pointer' : 'default';
                     };
 
+                    // --- Total Distance Covered Per Day (Histogram) ---
+                    // Use server-provided total_distance (km) if present, otherwise fallback to count * AVERAGE_DISTANCE_KM
+                    const distanceDates = (data.ridesPerDay || []).map(r => formatDate(r.date));
+                    const distancesArr = (data.ridesPerDay || []).map(day => {
+                        if (typeof day.total_distance !== 'undefined') return Math.round(day.total_distance || 0);
+                        if (typeof day.avg_distance !== 'undefined') return Math.round((day.avg_distance || AVERAGE_DISTANCE_KM) * (day.count || 0));
+                        return Math.round((day.count || 0) * AVERAGE_DISTANCE_KM);
+                    });
+
+                    const distanceCanvas = document.getElementById('distanceChart');
+                    const distanceChart = new Chart(distanceCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels: distanceDates,
+                            datasets: [{
+                                label: 'Distance (km)',
+                                data: distancesArr,
+                                backgroundColor: '#9c27b0',
+                                borderColor: '#7b1fa2',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            ...sharedInteractive,
+                            plugins: {
+                                ...sharedInteractive.plugins,
+                                tooltip: {
+                                    ...sharedInteractive.plugins.tooltip,
+                                    callbacks: {
+                                        title: items => items && items.length ? items[0].label : '',
+                                        label: ctx => `Distance: ${formatKm(ctx.parsed.y ?? ctx.parsed)}`
+                                    }
+                                },
+                                legend: { display: false }
+                            },
+                            scales: {
+                                x: { type: 'category', ticks: { autoSkip: true } },
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { callback: v => `${Math.round(v)} km` }
+                                }
+                            }
+                        }
+                    });
+                    distanceCanvas.onmousemove = e => {
+                        const el = distanceChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                        distanceCanvas.style.cursor = el.length ? 'pointer' : 'default';
+                    };
+                    createLegend('distanceLegend', ['Distance (km)'], ['#9c27b0']);
+
                     // --- Carbon Emission Savings (NEW) ---
                     const dates = (data.ridesPerDay || []).map(r => formatDate(r.date));
                     const emissionsArr = (data.ridesPerDay || []).map(day => {
                         if (typeof day.emission_savings !== 'undefined') return Math.round(day.emission_savings || 0);
-                        const count = day.count || 0;
-                        const assumeCar = (data.vehicleTypes || []).length ? (data.vehicleTypes[0].vehicle_type || '').toLowerCase().includes('car') : true;
-                        const perRide = (assumeCar ? EMISSIONS.car : EMISSIONS.bike) * 1 * 10;
-                        return Math.round(count * perRide);
+                        // fallback: compute using distance if available, else use count * avg-distance
+                        const totalKm = (typeof day.total_distance !== 'undefined')
+                            ? (day.total_distance || AVERAGE_DISTANCE_KM * (day.count || 0))
+                            : ((typeof day.avg_distance !== 'undefined') ? (day.avg_distance * (day.count || 0)) : (AVERAGE_DISTANCE_KM * (day.count || 0)));
+                        // assume saved vehicles equals passengers per ride; if passenger_count missing assume 1 saved per ride
+                        const savedMultiplier = (day.saved_passenger_count || day.passenger_count) ? (day.saved_passenger_count || day.passenger_count) : 1;
+                        // estimate using majority vehicle type or per-day breakdown if present
+                        let perKm = EMISSIONS.car;
+                        if (Array.isArray(day.breakdown) && day.breakdown.length) {
+                            // if breakdown present, sum precisely
+                            return Math.round(day.breakdown.reduce((sum, r) => {
+                                const isCar = String(r.vehicle_type || '').toLowerCase().includes('car');
+                                const base = isCar ? EMISSIONS.car : EMISSIONS.bike;
+                                const passengers = r.passenger_count || 1;
+                                const dist = r.distance || AVERAGE_DISTANCE_KM;
+                                return sum + base * passengers * dist;
+                            }, 0));
+                        } else {
+                            // fallback: use vehicleTypes majority heuristic
+                            const assumeCar = (data.vehicleTypes || []).length ? (data.vehicleTypes[0].vehicle_type || '').toLowerCase().includes('car') : true;
+                            perKm = assumeCar ? EMISSIONS.car : EMISSIONS.bike;
+                            return Math.round(perKm * savedMultiplier * totalKm);
+                        }
                     });
 
                     const carbonCanvas = document.getElementById('carbonChart');
@@ -380,7 +466,7 @@
                                 legend: { display: false }
                             },
                             scales: {
-                                x: { ticks: { stepSize: 1, callback: v => v } },
+                                x: { type: 'category', ticks: { autoSkip: true } },
                                 y: { beginAtZero: true, ticks: { callback: v => `${Math.round(v)}g` } }
                             }
                         }
