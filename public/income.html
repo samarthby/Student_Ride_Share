@@ -45,9 +45,46 @@
             font-size: 16px;
             cursor: pointer;
             font-weight: 600;
+            padding: 6px 10px;
         }
 
+        /* NEW: total income display styles */
+        .total-income-box {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 22px 16px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #ffffff 0%, #f6fff7 100%);
+            box-shadow: 0 6px 20px rgba(65, 185, 73, 0.12);
+            text-align: center;
+            margin-top: 14px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
 
+        .total-income-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(65, 185, 73, 0.18);
+        }
+
+        .total-value {
+            font-size: 40px;
+            font-weight: 800;
+            color: #2e7d32;
+            /* a rich green tone to emphasize earnings */
+            letter-spacing: 0.3px;
+            margin: 0;
+        }
+
+        .total-sub {
+            font-size: 14px;
+            color: #666;
+            opacity: 0.85;
+            letter-spacing: 0.3px;
+        }
 
         .chart-block {
             background: #fff;
@@ -128,6 +165,10 @@
                 padding: 8px 10px;
                 font-size: 15px;
             }
+
+            .total-value {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
@@ -139,12 +180,13 @@
             <h1>Income & Stats</h1>
         </div>
 
-
-        <div class="chart-block">
+        <div id="totalIncomeBox" class="total-income-box">
             <div class="chart-title">Total Income</div>
-            <canvas id="incomeChart"></canvas>
-            <div class="chart-legend" id="incomeLegend"></div>
+            <div class="total-value">₹0</div>
+            <div class="total-sub">Total earnings to date</div>
         </div>
+
+
         <div class="chart-block">
             <div class="chart-title">Income by Vehicle Type</div>
             <canvas id="vehicleChart"></canvas>
@@ -178,7 +220,7 @@
         // EMISSION CONSTANTS
         const EMISSIONS = {
             car: 120, // grams CO2 per km
-            bike: 30  // grams CO2 per km
+            bike: 30 // grams CO2 per km
         };
 
         // average distance per ride fallback (km)
@@ -229,6 +271,14 @@
                         throw new Error(data?.error || 'Invalid data received');
                     }
 
+                    // Update total income box (replaces doughnut)
+                    const totalIncomeBox = document.getElementById('totalIncomeBox');
+                    if (totalIncomeBox) {
+                        const incomeVal = data.totalIncome || 0;
+                        totalIncomeBox.querySelector('.total-value').textContent = formatCurrency(incomeVal);
+                        totalIncomeBox.querySelector('.total-sub').textContent = 'Total earnings to date';
+                    }
+
                     // Shared interactive options
                     const sharedInteractive = {
                         interaction: { mode: 'index', intersect: false },
@@ -248,7 +298,7 @@
                                         if (label && label.toLowerCase().includes('income')) return `${label}: ${formatCurrency(val)}`;
                                         if (label && label.toLowerCase().includes('rides')) return `${label}: ${Math.round(val)} rides`;
                                         if (label && label.toLowerCase().includes('km')) return `${label}: ${formatKm(val)}`;
-                                        if (label && label.toLowerCase().includes('co₂') || label.toLowerCase().includes('co2') || label.toLowerCase().includes('saved')) return `${label}: ${formatGrams(val)}`;
+                                        if (label && (label.toLowerCase().includes('co₂') || label.toLowerCase().includes('co2') || label.toLowerCase().includes('saved'))) return `${label}: ${formatGrams(val)}`;
                                         return label ? `${label}: ${val}` : `${val}`;
                                     }
                                 }
@@ -258,36 +308,6 @@
                         responsive: true,
                         animation: { duration: 450 }
                     };
-
-                    // --- Total Income ---
-                    const incomeColors = ['#41b949'];
-                    const incomeCanvas = document.getElementById('incomeChart');
-                    const incomeChart = new Chart(incomeCanvas, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Total Income'],
-                            datasets: [{
-                                label: 'Income',
-                                data: [data.totalIncome || 0],
-                                backgroundColor: incomeColors,
-                                borderWidth: 2,
-                                hoverOffset: 8
-                            }]
-                        },
-                        options: {
-                            ...sharedInteractive,
-                            plugins: {
-                                ...sharedInteractive.plugins,
-                                tooltip: { ...sharedInteractive.plugins.tooltip, callbacks: { title: () => 'Total Income', label: ctx => formatCurrency(ctx.parsed) } },
-                                legend: { display: false }
-                            }
-                        }
-                    });
-                    incomeCanvas.onmousemove = e => {
-                        const el = incomeChart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
-                        incomeCanvas.style.cursor = el.length ? 'pointer' : 'default';
-                    };
-                    createLegend('incomeLegend', ['Total Income'], incomeColors);
 
                     // --- Income by Vehicle Type ---
                     const vehicleColors = ['#41b949', '#0066ff', '#ff9800', '#9c27b0', '#e91e63'];
@@ -375,7 +395,6 @@
                     };
 
                     // --- Total Distance Covered Per Day (Histogram) ---
-                    // Use server-provided total_distance (km) if present, otherwise fallback to count * AVERAGE_DISTANCE_KM
                     const distanceDates = (data.ridesPerDay || []).map(r => formatDate(r.date));
                     const distancesArr = (data.ridesPerDay || []).map(day => {
                         if (typeof day.total_distance !== 'undefined') return Math.round(day.total_distance || 0);
@@ -428,16 +447,11 @@
                     const dates = (data.ridesPerDay || []).map(r => formatDate(r.date));
                     const emissionsArr = (data.ridesPerDay || []).map(day => {
                         if (typeof day.emission_savings !== 'undefined') return Math.round(day.emission_savings || 0);
-                        // fallback: compute using distance if available, else use count * avg-distance
                         const totalKm = (typeof day.total_distance !== 'undefined')
                             ? (day.total_distance || AVERAGE_DISTANCE_KM * (day.count || 0))
                             : ((typeof day.avg_distance !== 'undefined') ? (day.avg_distance * (day.count || 0)) : (AVERAGE_DISTANCE_KM * (day.count || 0)));
-                        // assume saved vehicles equals passengers per ride; if passenger_count missing assume 1 saved per ride
                         const savedMultiplier = (day.saved_passenger_count || day.passenger_count) ? (day.saved_passenger_count || day.passenger_count) : 1;
-                        // estimate using majority vehicle type or per-day breakdown if present
-                        let perKm = EMISSIONS.car;
                         if (Array.isArray(day.breakdown) && day.breakdown.length) {
-                            // if breakdown present, sum precisely
                             return Math.round(day.breakdown.reduce((sum, r) => {
                                 const isCar = String(r.vehicle_type || '').toLowerCase().includes('car');
                                 const base = isCar ? EMISSIONS.car : EMISSIONS.bike;
@@ -446,9 +460,8 @@
                                 return sum + base * passengers * dist;
                             }, 0));
                         } else {
-                            // fallback: use vehicleTypes majority heuristic
                             const assumeCar = (data.vehicleTypes || []).length ? (data.vehicleTypes[0].vehicle_type || '').toLowerCase().includes('car') : true;
-                            perKm = assumeCar ? EMISSIONS.car : EMISSIONS.bike;
+                            const perKm = assumeCar ? EMISSIONS.car : EMISSIONS.bike;
                             return Math.round(perKm * savedMultiplier * totalKm);
                         }
                     });
