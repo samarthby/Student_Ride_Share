@@ -7,6 +7,7 @@
     <title>Ride Share - My Rides</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <style>
+        /* (same CSS as before — no changes except ride-item styles already match the Find Rides version) */
         * {
             margin: 0;
             padding: 0;
@@ -43,11 +44,6 @@
             z-index: 100;
         }
 
-        .header h1 {
-            font-size: 24px;
-            font-weight: 700;
-        }
-
         .container {
             padding: 16px;
         }
@@ -59,7 +55,6 @@
             color: #444;
         }
 
-        /* Ride Card */
         .ride-item {
             background-color: white;
             border-radius: 12px;
@@ -91,9 +86,22 @@
 
         .ride-route {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
         }
+
+        .route-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .route-vehicle {
+            font-size: 28px;
+            /* bigger car/bike symbol */
+            margin-left: 40px;
+        }
+
 
         .route-point {
             display: flex;
@@ -103,7 +111,7 @@
             color: #333;
         }
 
-        .route-point .dot {
+        .dot {
             width: 14px;
             height: 14px;
             border-radius: 50%;
@@ -117,6 +125,24 @@
         .dot.end {
             background-color: red;
         }
+
+        .ride-price {
+            font-weight: 700;
+            color: #ffffff;
+            background: #41b949;
+            /* bright blue highlight */
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .vehicle-icon {
+            width: 100px;
+            /* adjust size */
+            height: auto;
+            object-fit: contain;
+        }
+
 
         .route-line {
             margin-left: 6px;
@@ -135,11 +161,6 @@
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .btn-start:hover {
-            background-color: #0050cc;
         }
 
         .nav-bar {
@@ -170,7 +191,7 @@
         }
 
         .nav-icon {
-            font-size: 22px;
+            font-size: 24px;
             margin-bottom: 4px;
         }
     </style>
@@ -184,14 +205,10 @@
 
         <div class="container">
             <h2 class="section-title">Upcoming Rides</h2>
-            <div class="rides-section" id="myRidesSection">
-                <!-- User's rides as driver will be loaded here -->
-            </div>
+            <div id="myRidesSection"></div>
 
             <h2 class="section-title">Your Boarded Rides</h2>
-            <div class="rides-section" id="myBoardedSection">
-                <!-- User's rides as passenger will be loaded here -->
-            </div>
+            <div id="myBoardedSection"></div>
         </div>
     </div>
 
@@ -216,19 +233,18 @@
 
     <script>
         function formatDate(dateString) {
-            if (!dateString) return '';
+            if (!dateString) return '-';
             const d = new Date(dateString);
-            return d.toISOString().split('T')[0];
+            return isNaN(d.getTime()) ? dateString.split('T')[0] : d.toISOString().split('T')[0];
         }
+
         function formatTime(timeString) {
-            if (!timeString) return '';
-            return timeString.slice(0, 5);
+            return timeString ? timeString.slice(0, 5) : '-';
         }
-        function getVehicleImage(type) {
-            if (type === 'Car') return '<img src="images/car.png" alt="Car" class="vehicle-icon" style="width:60px;height:auto;margin-left:30px;">';
-            if (type === 'Bike') return '<img src="images/bike.webp" alt="Bike" class="vehicle-icon" style="width:60px;height:auto;margin-left:30px;">';
-            return '';
-        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadMyRides();
+        });
 
         function loadMyRides() {
             const userEmail = localStorage.getItem('user_email');
@@ -236,111 +252,111 @@
             const section = document.getElementById('myRidesSection');
             const boardedSection = document.getElementById('myBoardedSection');
 
-            // Driver rides
             if (!userEmail) {
                 section.innerHTML = '<div style="color:#888;">Please login to see your rides.</div>';
-                boardedSection.innerHTML = '';
                 return;
             }
-            fetch(`http://localhost:3000/api/my-offered-rides?email=${encodeURIComponent(userEmail)}&t=${Date.now()}`)
+
+            // --- Driver Rides ---
+            fetch(`http://localhost:3000/api/my-offered-rides?email=${encodeURIComponent(userEmail)}`)
                 .then(res => res.json())
                 .then(rides => {
                     section.innerHTML = '';
                     if (!rides.length) {
                         section.innerHTML = '<div style="color:#888;">No rides posted yet.</div>';
-                    } else {
-                        rides.forEach(ride => {
-                            const div = document.createElement('div');
-                            div.className = 'ride-item';
-                            div.onclick = () => window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
-                            const vehicleImg = getVehicleImage(ride.vehicle_type);
-                            div.innerHTML = `
+                        return;
+                    }
+
+                    rides.forEach(ride => {
+                        const div = document.createElement('div');
+                        div.className = 'ride-item';
+                        const vehicleSymbol = ride.vehicle_type === 'Car'
+                            ? '<img src="images/car.png" alt="Car" class="vehicle-icon">'
+                            : (ride.vehicle_type === 'Bike'
+                                ? '<img src="images/bike.webp" alt="Bike" class="vehicle-icon">'
+                                : '');
+
+                        div.innerHTML = `
                             <div class="ride-top">
                                 <div>📅 ${formatDate(ride.date)}</div>
                                 <div>🕒 ${formatTime(ride.time)}</div>
-                                <div class="ride-price" style="background:#41b949;color:#fff;padding:4px 10px;border-radius:6px;">₹ ${ride.price_per_seat || '-'}</div>
+                                <div class="ride-price">₹ ${ride.price_per_seat}</div>
                             </div>
 
-                            <div class="ride-route" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
-                                <!-- Left Column: Source and Destination -->
-                                <div class="route-left" style="display:flex; flex-direction:column; gap:6px;">
+                            <div class="ride-route">
+                                <div class="route-left">
                                     <div class="route-point"><span class="dot start"></span> ${ride.source_name}</div>
                                     <div class="route-line"></div>
                                     <div class="route-point"><span class="dot end"></span> ${ride.destination_name}</div>
                                 </div>
-
-
+                                <div class="route-vehicle">${vehicleSymbol}</div>
                             </div>
 
-                            <div class="ride-top" style="margin-top:12px;">
-                                <div style="font-weight:600;">${vehicleImg || ''}</div>
-                                <div style="font-size:13px;color:#555;"><span style="font-weight:600;">${ride.vehicle_number || '-'}</span></div>
+                            <div class="ride-top" style="margin-top: 12px;">
+                                <div>Vehicle: ${ride.vehicle_number || '-'}</div>
+                                <div>👥 ${ride.available_seats || 0} seats left</div>
                             </div>
+
                             <button class="btn-start" data-rideid="${ride.ride_id}">Start Ride</button>
                         `;
-                            section.appendChild(div);
-                        });
-                        section.querySelectorAll('.btn-start').forEach(btn => {
-                            btn.onclick = function (e) {
-                                e.stopPropagation();
-                                const rideId = btn.getAttribute('data-rideid');
-                                window.location.href = `driver_live_map.html?ride_id=${rideId}`;
-                            };
-                        });
-                    }
+                        div.onclick = () => window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
+                        section.appendChild(div);
+                    });
+
+                    section.querySelectorAll('.btn-start').forEach(btn => {
+                        btn.onclick = function (e) {
+                            e.stopPropagation();
+                            const rideId = btn.getAttribute('data-rideid');
+                            window.location.href = `driver_live_map.html?ride_id=${rideId}`;
+                        };
+                    });
                 });
 
-            // Passenger rides
-            if (!userId) {
-                boardedSection.innerHTML = '';
-                return;
-            }
-            fetch(`http://localhost:3000/api/my-boarded-rides?passenger_id=${userId}&t=${Date.now()}`)
+            // --- Passenger Rides ---
+            fetch(`http://localhost:3000/api/my-boarded-rides?passenger_id=${userId}`)
                 .then(res => res.json())
                 .then(rides => {
                     boardedSection.innerHTML = '';
                     if (!rides.length) {
                         boardedSection.innerHTML = '<div style="color:#888;">No boarded rides yet.</div>';
-                    } else {
-                        rides.forEach(ride => {
-                            const div = document.createElement('div');
-                            div.className = 'ride-item';
-                            div.onclick = () => window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
-                            const vehicleImg = getVehicleImage(ride.vehicle_type);
-                            div.innerHTML = `
+                        return;
+                    }
+
+                    rides.forEach(ride => {
+                        const div = document.createElement('div');
+                        div.className = 'ride-item';
+                        const vehicleSymbol = ride.vehicle_type === 'Car'
+                            ? '<img src="images/car.png" alt="Car" class="vehicle-icon">'
+                            : (ride.vehicle_type === 'Bike'
+                                ? '<img src="images/bike.webp" alt="Bike" class="vehicle-icon">'
+                                : '');
+
+                        div.innerHTML = `
                             <div class="ride-top">
                                 <div>📅 ${formatDate(ride.date)}</div>
                                 <div>🕒 ${formatTime(ride.time)}</div>
-                                <div class="ride-price" style="background:#41b949;color:#fff;padding:4px 10px;border-radius:6px;">₹ ${ride.price_per_seat || '-'}</div>
+                                <div class="ride-price">₹ ${ride.price_per_seat}</div>
                             </div>
-                            <div class="ride-route" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
-                                <div class="route-left" style="display:flex;flex-direction:column;">
+
+                            <div class="ride-route">
+                                <div class="route-left">
                                     <div class="route-point"><span class="dot start"></span> ${ride.source_name}</div>
                                     <div class="route-line"></div>
                                     <div class="route-point"><span class="dot end"></span> ${ride.destination_name}</div>
                                 </div>
-
+                                <div class="route-vehicle">${vehicleSymbol}</div>
                             </div>
-                            <div class="ride-top" style="margin-top:12px;">
-                                <div style="font-weight:600;">${vehicleImg || ''}</div>
-                                <div style="font-size:13px;color:#555;"><span style="font-weight:600;">${ride.vehicle_number || '-'}</span></div>
-                                <div style="font-size:13px;color:#555;">Driver: <span style="font-weight:600;">${ride.driver_name || '-'}</span></div>
+
+                            <div class="ride-top" style="margin-top: 12px;">
+                                <div>Driver: ${ride.driver_name || '-'}</div>
+                                <div>👥 ${ride.available_seats || 0} seats left</div>
                             </div>
                         `;
-                            boardedSection.appendChild(div);
-                        });
-                    }
-                })
-                .catch(err => {
-                    boardedSection.innerHTML = '<div style="color:#888;">Error loading boarded rides.</div>';
-                    console.error(err);
+                        div.onclick = () => window.location.href = `boaring_ride_details.html?ride_id=${ride.ride_id}`;
+                        boardedSection.appendChild(div);
+                    });
                 });
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            loadMyRides();
-            window.addEventListener('ride-posted', loadMyRides);
-        });
     </script>
 </body>
 
